@@ -35,6 +35,7 @@ use alloc::{
     borrow::ToOwned,
     boxed::Box,
     string::{FromUtf8Error, String},
+    vec,
     vec::Vec,
 };
 #[cfg(feature = "std")]
@@ -43,13 +44,19 @@ use std::string::FromUtf8Error;
 #[cfg(feature = "arbitrary")]
 use arbitrary::Arbitrary;
 
-// TODO: Add support for read/write xdr fns when std not available.
-
 #[cfg(feature = "std")]
 use std::{
     error, io,
-    io::{BufRead, BufReader, Cursor, Read, Write},
+    io::{BufRead, BufReader, Cursor, Read, Result as IOResult, Write},
 };
+
+// Used in no_std environments with alloc enabled.
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use embedded_io::{BufRead, Read, Write, ErrorType};
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use embedded_io_cursor::Cursor;
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+pub type IOResult<T> = core::result::Result<T, embedded_io::ErrorKind>;
 
 /// Error contains all errors returned by functions in this crate. It can be
 /// compared via `PartialEq`, however any contained IO errors will only be
@@ -164,6 +171,20 @@ impl From<Error> for () {
     fn from(_: Error) {}
 }
 
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+impl From<embedded_io::ErrorKind> for Error {
+    fn from(value: embedded_io::ErrorKind) -> Self {
+        todo!()
+    }
+}
+
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+impl From<embedded_io::ReadExactError<embedded_io::ErrorKind>> for Error {
+    fn from(value: embedded_io::ReadExactError<embedded_io::ErrorKind>) -> Self {
+        todo!()
+    }
+}
+
 #[allow(dead_code)]
 type Result<T> = core::result::Result<T, Error>;
 
@@ -200,7 +221,7 @@ where
 
 /// `Limits` contains the limits that a limited reader or writer will be
 /// constrained to.
-#[cfg(feature = "std")]
+#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Limits {
     /// Defines the maximum depth for recursive calls in `Read/WriteXdr` to
@@ -217,7 +238,7 @@ pub struct Limits {
     pub len: usize,
 }
 
-#[cfg(feature = "std")]
+#[cfg(feature = "alloc")]
 impl Limits {
     #[must_use]
     pub fn none() -> Self {
@@ -248,13 +269,13 @@ impl Limits {
 ///
 /// Intended for use with readers and writers and limiting their reads and
 /// writes.
-#[cfg(feature = "std")]
+#[cfg(feature = "alloc")]
 pub struct Limited<L> {
     pub inner: L,
     pub(crate) limits: Limits,
 }
 
-#[cfg(feature = "std")]
+#[cfg(feature = "alloc")]
 impl<L> Limited<L> {
     /// Constructs a new `Limited`.
     ///
@@ -299,18 +320,24 @@ impl<L> Limited<L> {
     }
 }
 
-#[cfg(feature = "std")]
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+impl<R: Read> ErrorType for Limited<R> { type Error = embedded_io::ErrorKind; }
+
+#[cfg(feature = "alloc")]
 impl<R: Read> Read for Limited<R> {
     /// Forwards the read operation to the wrapped object.
-    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+    fn read(&mut self, buf: &mut [u8]) -> IOResult<usize> {
         self.inner.read(buf)
     }
 }
 
-#[cfg(feature = "std")]
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+impl<R: BufRead> ErrorType for Limited<R> { type Error = embedded_io::ErrorKind; }
+
+#[cfg(feature = "alloc")]
 impl<R: BufRead> BufRead for Limited<R> {
     /// Forwards the read operation to the wrapped object.
-    fn fill_buf(&mut self) -> std::io::Result<&[u8]> {
+    fn fill_buf(&mut self) -> IOResult<&[u8]> {
         self.inner.fill_buf()
     }
 
@@ -320,15 +347,18 @@ impl<R: BufRead> BufRead for Limited<R> {
     }
 }
 
-#[cfg(feature = "std")]
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+impl<W: Write> ErrorType for Limited<W> { type Error = embedded_io::ErrorKind; }
+
+#[cfg(feature = "alloc")]
 impl<W: Write> Write for Limited<W> {
     /// Forwards the write operation to the wrapped object.
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+    fn write(&mut self, buf: &[u8]) -> IOResult<usize> {
         self.inner.write(buf)
     }
 
     /// Forwards the flush operation to the wrapped object.
-    fn flush(&mut self) -> std::io::Result<()> {
+    fn flush(&mut self) -> IOResult<()> {
         self.inner.flush()
     }
 }
@@ -406,7 +436,7 @@ where
     ///
     /// Use [`ReadXdR: Read_xdr_to_end`] when the intent is for all bytes in the
     /// read implementation to be consumed by the read.
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self>;
 
     /// Construct the type from the XDR bytes base64 encoded.
@@ -441,7 +471,7 @@ where
     ///
     /// All implementations should continue if the read implementation returns
     /// [`ErrorKind::Interrupted`](std::io::ErrorKind::Interrupted).
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr_to_end<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         let s = Self::read_xdr(r)?;
         // Check that any further reads, such as this read of one byte, read no
@@ -481,7 +511,7 @@ where
     ///
     /// Use [`ReadXdR: Read_xdr_into_to_end`] when the intent is for all bytes
     /// in the read implementation to be consumed by the read.
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr_into<R: Read>(&mut self, r: &mut Limited<R>) -> Result<()> {
         *self = Self::read_xdr(r)?;
         Ok(())
@@ -505,7 +535,7 @@ where
     ///
     /// All implementations should continue if the read implementation returns
     /// [`ErrorKind::Interrupted`](std::io::ErrorKind::Interrupted).
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr_into_to_end<R: Read>(&mut self, r: &mut Limited<R>) -> Result<()> {
         Self::read_xdr_into(self, r)?;
         // Check that any further reads, such as this read of one byte, read no
@@ -554,7 +584,7 @@ where
     ///
     /// An error is returned if the bytes are not completely consumed by the
     /// deserialization.
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn from_xdr(bytes: impl AsRef<[u8]>, limits: Limits) -> Result<Self> {
         let mut cursor = Limited::new(Cursor::new(bytes.as_ref()), limits);
         let t = Self::read_xdr_to_end(&mut cursor)?;
@@ -578,10 +608,10 @@ where
 }
 
 pub trait WriteXdr {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()>;
 
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>> {
         let mut cursor = Limited::new(Cursor::new(vec![]), limits);
         self.write_xdr(&mut cursor)?;
@@ -603,13 +633,13 @@ pub trait WriteXdr {
 
 /// `Pad_len` returns the number of bytes to pad an XDR value of the given
 /// length to make the final serialized size a multiple of 4.
-#[cfg(feature = "std")]
+#[cfg(feature = "alloc")]
 fn pad_len(len: usize) -> usize {
     (4 - (len % 4)) % 4
 }
 
 impl ReadXdr for i32 {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         let mut b = [0u8; 4];
         r.with_limited_depth(|r| {
@@ -621,7 +651,7 @@ impl ReadXdr for i32 {
 }
 
 impl WriteXdr for i32 {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         let b: [u8; 4] = self.to_be_bytes();
         w.with_limited_depth(|w| {
@@ -632,7 +662,7 @@ impl WriteXdr for i32 {
 }
 
 impl ReadXdr for u32 {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         let mut b = [0u8; 4];
         r.with_limited_depth(|r| {
@@ -644,7 +674,7 @@ impl ReadXdr for u32 {
 }
 
 impl WriteXdr for u32 {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         let b: [u8; 4] = self.to_be_bytes();
         w.with_limited_depth(|w| {
@@ -655,7 +685,7 @@ impl WriteXdr for u32 {
 }
 
 impl ReadXdr for i64 {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         let mut b = [0u8; 8];
         r.with_limited_depth(|r| {
@@ -667,7 +697,7 @@ impl ReadXdr for i64 {
 }
 
 impl WriteXdr for i64 {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         let b: [u8; 8] = self.to_be_bytes();
         w.with_limited_depth(|w| {
@@ -678,7 +708,7 @@ impl WriteXdr for i64 {
 }
 
 impl ReadXdr for u64 {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         let mut b = [0u8; 8];
         r.with_limited_depth(|r| {
@@ -690,7 +720,7 @@ impl ReadXdr for u64 {
 }
 
 impl WriteXdr for u64 {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         let b: [u8; 8] = self.to_be_bytes();
         w.with_limited_depth(|w| {
@@ -701,35 +731,35 @@ impl WriteXdr for u64 {
 }
 
 impl ReadXdr for f32 {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self> {
         todo!()
     }
 }
 
 impl WriteXdr for f32 {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn write_xdr<W: Write>(&self, _w: &mut Limited<W>) -> Result<()> {
         todo!()
     }
 }
 
 impl ReadXdr for f64 {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self> {
         todo!()
     }
 }
 
 impl WriteXdr for f64 {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn write_xdr<W: Write>(&self, _w: &mut Limited<W>) -> Result<()> {
         todo!()
     }
 }
 
 impl ReadXdr for bool {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = u32::read_xdr(r)?;
@@ -740,7 +770,7 @@ impl ReadXdr for bool {
 }
 
 impl WriteXdr for bool {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i = u32::from(*self); // true = 1, false = 0
@@ -750,7 +780,7 @@ impl WriteXdr for bool {
 }
 
 impl<T: ReadXdr> ReadXdr for Option<T> {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = u32::read_xdr(r)?;
@@ -767,7 +797,7 @@ impl<T: ReadXdr> ReadXdr for Option<T> {
 }
 
 impl<T: WriteXdr> WriteXdr for Option<T> {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             if let Some(t) = self {
@@ -782,35 +812,35 @@ impl<T: WriteXdr> WriteXdr for Option<T> {
 }
 
 impl<T: ReadXdr> ReadXdr for Box<T> {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| Ok(Box::new(T::read_xdr(r)?)))
     }
 }
 
 impl<T: WriteXdr> WriteXdr for Box<T> {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| T::write_xdr(self, w))
     }
 }
 
 impl ReadXdr for () {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self> {
         Ok(())
     }
 }
 
 impl WriteXdr for () {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn write_xdr<W: Write>(&self, _w: &mut Limited<W>) -> Result<()> {
         Ok(())
     }
 }
 
 impl<const N: usize> ReadXdr for [u8; N] {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             r.consume_len(N)?;
@@ -829,7 +859,7 @@ impl<const N: usize> ReadXdr for [u8; N] {
 }
 
 impl<const N: usize> WriteXdr for [u8; N] {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             w.consume_len(N)?;
@@ -843,7 +873,7 @@ impl<const N: usize> WriteXdr for [u8; N] {
 }
 
 impl<T: ReadXdr, const N: usize> ReadXdr for [T; N] {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let mut vec = Vec::with_capacity(N);
@@ -858,7 +888,7 @@ impl<T: ReadXdr, const N: usize> ReadXdr for [T; N] {
 }
 
 impl<T: WriteXdr, const N: usize> WriteXdr for [T; N] {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             for t in self {
@@ -1217,7 +1247,7 @@ impl<'a, const MAX: u32> TryFrom<&'a VecM<u8, MAX>> for &'a str {
 }
 
 impl<const MAX: u32> ReadXdr for VecM<u8, MAX> {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let len: u32 = u32::read_xdr(r)?;
@@ -1244,7 +1274,7 @@ impl<const MAX: u32> ReadXdr for VecM<u8, MAX> {
 }
 
 impl<const MAX: u32> WriteXdr for VecM<u8, MAX> {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
@@ -1264,7 +1294,7 @@ impl<const MAX: u32> WriteXdr for VecM<u8, MAX> {
 }
 
 impl<T: ReadXdr, const MAX: u32> ReadXdr for VecM<T, MAX> {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let len = u32::read_xdr(r)?;
@@ -1284,7 +1314,7 @@ impl<T: ReadXdr, const MAX: u32> ReadXdr for VecM<T, MAX> {
 }
 
 impl<T: WriteXdr, const MAX: u32> WriteXdr for VecM<T, MAX> {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
@@ -1657,7 +1687,7 @@ impl<'a, const MAX: u32> TryFrom<&'a BytesM<MAX>> for &'a str {
 }
 
 impl<const MAX: u32> ReadXdr for BytesM<MAX> {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let len: u32 = u32::read_xdr(r)?;
@@ -1684,7 +1714,7 @@ impl<const MAX: u32> ReadXdr for BytesM<MAX> {
 }
 
 impl<const MAX: u32> WriteXdr for BytesM<MAX> {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
@@ -2060,7 +2090,7 @@ impl<'a, const MAX: u32> TryFrom<&'a StringM<MAX>> for &'a str {
 }
 
 impl<const MAX: u32> ReadXdr for StringM<MAX> {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let len: u32 = u32::read_xdr(r)?;
@@ -2087,7 +2117,7 @@ impl<const MAX: u32> ReadXdr for StringM<MAX> {
 }
 
 impl<const MAX: u32> WriteXdr for StringM<MAX> {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
@@ -2133,7 +2163,7 @@ impl<T> ReadXdr for Frame<T>
 where
     T: ReadXdr,
 {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         // Read the frame header value that contains 1 flag-bit and a 33-bit length.
         //  - The 1 flag bit is 0 when there are more frames for the same record.
@@ -2876,7 +2906,7 @@ Self::Multi => "Multi",
         }
 
         impl ReadXdr for UnionKey {
-            #[cfg(feature = "std")]
+            #[cfg(feature = "alloc")]
             fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
                 r.with_limited_depth(|r| {
                     let e = i32::read_xdr(r)?;
@@ -2887,7 +2917,7 @@ Self::Multi => "Multi",
         }
 
         impl WriteXdr for UnionKey {
-            #[cfg(feature = "std")]
+            #[cfg(feature = "alloc")]
             fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
                 w.with_limited_depth(|w| {
                     let i: i32 = (*self).into();
@@ -2976,7 +3006,7 @@ Self::Multi(_) => UnionKey::Multi,
         impl Union<UnionKey> for MyUnion {}
 
         impl ReadXdr for MyUnion {
-            #[cfg(feature = "std")]
+            #[cfg(feature = "alloc")]
             fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
                 r.with_limited_depth(|r| {
                     let dv: UnionKey = <UnionKey as ReadXdr>::read_xdr(r)?;
@@ -2993,7 +3023,7 @@ UnionKey::Multi => Self::Multi(VecM::<i32>::read_xdr(r)?),
         }
 
         impl WriteXdr for MyUnion {
-            #[cfg(feature = "std")]
+            #[cfg(feature = "alloc")]
             fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
                 w.with_limited_depth(|w| {
                     self.discriminant().write_xdr(w)?;
@@ -3087,7 +3117,7 @@ Self::V1(_) => 1,
         impl Union<i32> for IntUnion {}
 
         impl ReadXdr for IntUnion {
-            #[cfg(feature = "std")]
+            #[cfg(feature = "alloc")]
             fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
                 r.with_limited_depth(|r| {
                     let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -3104,7 +3134,7 @@ Self::V1(_) => 1,
         }
 
         impl WriteXdr for IntUnion {
-            #[cfg(feature = "std")]
+            #[cfg(feature = "alloc")]
             fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
                 w.with_limited_depth(|w| {
                     self.discriminant().write_xdr(w)?;
@@ -3153,7 +3183,7 @@ impl AsRef<IntUnion> for IntUnion2 {
 }
 
 impl ReadXdr for IntUnion2 {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = IntUnion::read_xdr(r)?;
@@ -3164,7 +3194,7 @@ impl ReadXdr for IntUnion2 {
 }
 
 impl WriteXdr for IntUnion2 {
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w|{ self.0.write_xdr(w) })
     }
@@ -3294,7 +3324,7 @@ TypeVariant::IntUnion2, ];
 "IntUnion",
 "IntUnion2", ];
 
-            #[cfg(feature = "std")]
+            #[cfg(feature = "alloc")]
             #[allow(clippy::too_many_lines)]
             pub fn read_xdr<R: Read>(v: TypeVariant, r: &mut Limited<R>) -> Result<Self> {
                 match v {
@@ -3314,7 +3344,7 @@ TypeVariant::IntUnion2 => r.with_limited_depth(|r| Ok(Self::IntUnion2(Box::new(I
                 Ok(t)
             }
 
-            #[cfg(feature = "std")]
+            #[cfg(feature = "alloc")]
             pub fn read_xdr_to_end<R: Read>(v: TypeVariant, r: &mut Limited<R>) -> Result<Self> {
                 let s = Self::read_xdr(v, r)?;
                 // Check that any further reads, such as this read of one byte, read no
@@ -3373,7 +3403,7 @@ TypeVariant::IntUnion2 => Box::new(ReadXdrIter::<_, IntUnion2>::new(dec, r.limit
                 }
             }
 
-            #[cfg(feature = "std")]
+            #[cfg(feature = "alloc")]
             pub fn from_xdr<B: AsRef<[u8]>>(v: TypeVariant, bytes: B, limits: Limits) -> Result<Self> {
                 let mut cursor = Limited::new(Cursor::new(bytes.as_ref()), limits);
                 let t = Self::read_xdr_to_end(v, &mut cursor)?;
@@ -3482,7 +3512,7 @@ Self::IntUnion2(_) => TypeVariant::IntUnion2,
         }
 
         impl WriteXdr for Type {
-            #[cfg(feature = "std")]
+            #[cfg(feature = "alloc")]
             #[allow(clippy::too_many_lines)]
             fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
                 match self {
