@@ -25,7 +25,7 @@ class NesterNestedUnion:
     def __init__(
         self,
         color: Color,
-        blah2: int = None,
+        blah2: Optional[int] = None,
     ) -> None:
         self.color = color
         self.blah2 = blah2

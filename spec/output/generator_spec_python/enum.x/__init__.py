@@ -2,7 +2,7 @@
 # DO NOT EDIT or your changes may be overwritten
 from .base import *
 from .constants import *
-from .message_type import MessageType
-from .color import Color
-from .color2 import Color2
-from .color3 import Color3
+from .message_type import *
+from .color import *
+from .color2 import *
+from .color3 import *

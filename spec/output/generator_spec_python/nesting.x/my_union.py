@@ -37,8 +37,8 @@ class MyUnion:
     def __init__(
         self,
         type: UnionKey,
-        one: MyUnionOne = None,
-        two: MyUnionTwo = None,
+        one: Optional[MyUnionOne] = None,
+        two: Optional[MyUnionTwo] = None,
     ) -> None:
         self.type = type
         self.one = one

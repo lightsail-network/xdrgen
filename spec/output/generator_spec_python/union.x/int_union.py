@@ -28,8 +28,8 @@ class IntUnion:
     def __init__(
         self,
         type: int,
-        error: Error = None,
-        things: List[Multi] = None,
+        error: Optional[Error] = None,
+        things: Optional[List[Multi]] = None,
     ) -> None:
         _expect_max_length = 4294967295
         if things and len(things) > _expect_max_length:
