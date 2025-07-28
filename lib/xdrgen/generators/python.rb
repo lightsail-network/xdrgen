@@ -229,7 +229,11 @@ module Xdrgen
                 if c.value.is_a?(AST::Identifier)
                   out.puts "if self.#{union_discriminant_name_underscore} == #{type_string union.discriminant.type}.#{c.value.name}:"
                 else
-                  out.puts "if self.#{union_discriminant_name_underscore} == #{c.value.value}:"
+                  if type_string(union.discriminant.type) == "Uint32"
+                    out.puts "if self.#{union_discriminant_name_underscore}.uint32 == #{c.value.value}:"
+                  else
+                    out.puts "if self.#{union_discriminant_name_underscore} == #{c.value.value}:"
+                  end
                 end
                 out.indent(2) do
                   unless arm.void?
@@ -253,7 +257,11 @@ module Xdrgen
                 if c.value.is_a?(AST::Identifier)
                   out.puts "if #{union_discriminant_name_underscore} == #{type_string union.discriminant.type}.#{c.value.name}:"
                 else
-                  out.puts "if #{union_discriminant_name_underscore} == #{c.value.value}:"
+                  if type_string(union.discriminant.type) == "Uint32"
+                    out.puts "if #{union_discriminant_name_underscore}.uint32 == #{c.value.value}:"
+                  else
+                    out.puts "if #{union_discriminant_name_underscore} == #{c.value.value}:"
+                  end  
                 end
                 out.indent(2) do
                   if arm.void?
