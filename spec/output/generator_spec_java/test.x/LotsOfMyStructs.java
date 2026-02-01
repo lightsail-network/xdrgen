@@ -38,6 +38,9 @@ public class LotsOfMyStructs implements XdrElement {
   public static LotsOfMyStructs decode(XdrDataInputStream stream) throws IOException {
     LotsOfMyStructs decodedLotsOfMyStructs = new LotsOfMyStructs();
     int membersSize = stream.readInt();
+    if (membersSize < 0) {
+      throw new IOException("members size " + membersSize + " is negative");
+    }
     decodedLotsOfMyStructs.members = new MyStruct[membersSize];
     for (int i = 0; i < membersSize; i++) {
       decodedLotsOfMyStructs.members[i] = MyStruct.decode(stream);

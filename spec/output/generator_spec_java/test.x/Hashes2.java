@@ -34,6 +34,12 @@ public class Hashes2 implements XdrElement {
   public static Hashes2 decode(XdrDataInputStream stream) throws IOException {
     Hashes2 decodedHashes2 = new Hashes2();
     int Hashes2Size = stream.readInt();
+    if (Hashes2Size < 0) {
+      throw new IOException("Hashes2 size " + Hashes2Size + " is negative");
+    }
+    if (Hashes2Size > 12) {
+      throw new IOException("Hashes2 size " + Hashes2Size + " exceeds max size 12");
+    }
     decodedHashes2.Hashes2 = new Hash[Hashes2Size];
     for (int i = 0; i < Hashes2Size; i++) {
       decodedHashes2.Hashes2[i] = Hash.decode(stream);

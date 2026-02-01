@@ -61,6 +61,9 @@ public class MyUnion implements XdrElement {
   break;
   case MULTI:
   int thingsSize = stream.readInt();
+  if (thingsSize < 0) {
+    throw new IOException("things size " + thingsSize + " is negative");
+  }
   decodedMyUnion.things = new Multi[thingsSize];
   for (int i = 0; i < thingsSize; i++) {
     decodedMyUnion.things[i] = Multi.decode(stream);

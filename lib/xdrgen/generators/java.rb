@@ -498,6 +498,16 @@ module Xdrgen
             out.puts "int #{member.name}Size = #{convert_constant member.declaration.size};"
           else
             out.puts "int #{member.name}Size = stream.readInt();"
+            # Add size validation for variable-length opaque
+            out.puts "if (#{member.name}Size < 0) {"
+            out.puts "  throw new IOException(\"#{member.name} size \" + #{member.name}Size + \" is negative\");"
+            out.puts "}"
+            max_size = member.declaration.resolved_size
+            if max_size
+              out.puts "if (#{member.name}Size > #{convert_constant max_size}) {"
+              out.puts "  throw new IOException(\"#{member.name} size \" + #{member.name}Size + \" exceeds max size #{max_size}\");"
+              out.puts "}"
+            end
           end
           out.puts <<-EOS.strip_heredoc
             #{value}.#{member.name} = new byte[#{member.name}Size];
@@ -508,6 +518,16 @@ module Xdrgen
             out.puts "int #{member.name}Size = #{convert_constant member.declaration.size};"
           else
             out.puts "int #{member.name}Size = stream.readInt();"
+            # Add size validation for variable-length array
+            out.puts "if (#{member.name}Size < 0) {"
+            out.puts "  throw new IOException(\"#{member.name} size \" + #{member.name}Size + \" is negative\");"
+            out.puts "}"
+            max_size = member.declaration.resolved_size
+            if max_size
+              out.puts "if (#{member.name}Size > #{convert_constant max_size}) {"
+              out.puts "  throw new IOException(\"#{member.name} size \" + #{member.name}Size + \" exceeds max size #{max_size}\");"
+              out.puts "}"
+            end
           end
           out.puts <<-EOS.strip_heredoc
             #{value}.#{member.name} = new #{type_string member.type}[#{member.name}Size];

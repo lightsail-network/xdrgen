@@ -34,6 +34,12 @@ public class TestArray2 implements XdrElement {
   public static TestArray2 decode(XdrDataInputStream stream) throws IOException {
     TestArray2 decodedTestArray2 = new TestArray2();
     int TestArray2Size = stream.readInt();
+    if (TestArray2Size < 0) {
+      throw new IOException("TestArray2 size " + TestArray2Size + " is negative");
+    }
+    if (TestArray2Size > 1) {
+      throw new IOException("TestArray2 size " + TestArray2Size + " exceeds max size 1");
+    }
     decodedTestArray2.TestArray2 = new Integer[TestArray2Size];
     for (int i = 0; i < TestArray2Size; i++) {
       decodedTestArray2.TestArray2[i] = stream.readInt();

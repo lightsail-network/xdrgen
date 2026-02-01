@@ -34,6 +34,9 @@ public class Hashes3 implements XdrElement {
   public static Hashes3 decode(XdrDataInputStream stream) throws IOException {
     Hashes3 decodedHashes3 = new Hashes3();
     int Hashes3Size = stream.readInt();
+    if (Hashes3Size < 0) {
+      throw new IOException("Hashes3 size " + Hashes3Size + " is negative");
+    }
     decodedHashes3.Hashes3 = new Hash[Hashes3Size];
     for (int i = 0; i < Hashes3Size; i++) {
       decodedHashes3.Hashes3[i] = Hash.decode(stream);

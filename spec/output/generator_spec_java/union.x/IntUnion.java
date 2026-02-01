@@ -60,6 +60,9 @@ public class IntUnion implements XdrElement {
   break;
   case 1:
   int thingsSize = stream.readInt();
+  if (thingsSize < 0) {
+    throw new IOException("things size " + thingsSize + " is negative");
+  }
   decodedIntUnion.things = new Multi[thingsSize];
   for (int i = 0; i < thingsSize; i++) {
     decodedIntUnion.things[i] = Multi.decode(stream);

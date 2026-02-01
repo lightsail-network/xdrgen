@@ -32,6 +32,9 @@ public class Uint514 implements XdrElement {
   public static Uint514 decode(XdrDataInputStream stream) throws IOException {
     Uint514 decodedUint514 = new Uint514();
     int uint514Size = stream.readInt();
+    if (uint514Size < 0) {
+      throw new IOException("uint514 size " + uint514Size + " is negative");
+    }
     decodedUint514.uint514 = new byte[uint514Size];
     stream.read(decodedUint514.uint514, 0, uint514Size);
     return decodedUint514;
