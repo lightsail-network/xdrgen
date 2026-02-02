@@ -509,7 +509,7 @@ module Xdrgen
         when AST::Typespecs::Double ;
           "stream.writeDouble(#{value})"
         when AST::Typespecs::Quadruple ;
-          raise "cannot render quadruple in golang"
+          raise "cannot render quadruple in java"
         when AST::Typespecs::Bool ;
           "stream.writeInt(#{value} ? 1 : 0)"
         when AST::Typespecs::String ;
@@ -610,7 +610,7 @@ module Xdrgen
         when AST::Typespecs::Double ;
           "stream.readDouble()"
         when AST::Typespecs::Quadruple ;
-          raise "cannot render quadruple in golang"
+          raise "cannot render quadruple in java"
         when AST::Typespecs::Bool ;
           "stream.readBoolean()"
         when AST::Typespecs::String ;
@@ -680,7 +680,7 @@ module Xdrgen
         when AST::Typespecs::Double ;
           "Double"
         when AST::Typespecs::Quadruple ;
-          raise "cannot render quadruple in golang"
+          raise "cannot render quadruple in java"
         when AST::Typespecs::Bool ;
           "Boolean"
         when AST::Typespecs::Opaque ;
