@@ -36,7 +36,7 @@ public class Hash implements XdrElement {
     Hash decodedHash = new Hash();
     int HashSize = 32;
     decodedHash.Hash = new byte[HashSize];
-    stream.read(decodedHash.Hash, 0, HashSize);
+    stream.readPaddedData(decodedHash.Hash, 0, HashSize);
     return decodedHash;
   }
   public static Hash decode(XdrDataInputStream stream) throws IOException {

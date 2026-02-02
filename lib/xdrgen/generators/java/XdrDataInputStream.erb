@@ -1,6 +1,7 @@
 package <%= @namespace %>;
 
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -109,6 +110,22 @@ public class XdrDataInputStream extends DataInputStream {
     }
 
     /**
+     * Reads exactly len bytes of XDR opaque/string data, handling short reads,
+     * then reads and validates padding bytes to maintain 4-byte alignment.
+     * This method must be used instead of read(byte[], int, int) for opaque data
+     * to correctly handle short reads from the underlying stream.
+     *
+     * @param b   the buffer into which the data is read
+     * @param off the start offset in array b at which the data is written
+     * @param len the number of bytes to read
+     * @throws IOException if an I/O error occurs or EOF is reached before reading len bytes
+     */
+    public void readPaddedData(byte[] b, int off, int len) throws IOException {
+        mIn.readFullyNoPad(b, off, len);
+        mIn.pad();
+    }
+
+    /**
      * Need to provide a custom impl of InputStream as DataInputStream's read methods
      * are final and we need to keep track of the count for padding purposes.
      */
@@ -165,6 +182,22 @@ public class XdrDataInputStream extends DataInputStream {
                 if (b != 0) {
                     throw new IOException("non-zero padding");
                 }
+            }
+        }
+
+        /**
+         * Reads exactly len bytes into the buffer, handling short reads.
+         * Does not apply padding - caller must call pad() after this.
+         */
+        void readFullyNoPad(byte[] b, int off, int len) throws IOException {
+            int totalRead = 0;
+            while (totalRead < len) {
+                int read = mIn.read(b, off + totalRead, len - totalRead);
+                if (read < 0) {
+                    throw new EOFException("Unexpected end of stream while reading XDR data");
+                }
+                mCount += read;
+                totalRead += read;
             }
         }
     }

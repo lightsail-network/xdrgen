@@ -558,7 +558,7 @@ module Xdrgen
           end
           out.puts <<-EOS.strip_heredoc
             #{value}.#{member.name} = new byte[#{member.name}Size];
-            stream.read(#{value}.#{member.name}, 0, #{member.name}Size);
+            stream.readPaddedData(#{value}.#{member.name}, 0, #{member.name}Size);
           EOS
         when AST::Declarations::Array ;
           if (member.declaration.fixed?)

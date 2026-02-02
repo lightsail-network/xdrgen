@@ -36,7 +36,7 @@ public class Uint512 implements XdrElement {
     Uint512 decodedUint512 = new Uint512();
     int uint512Size = 64;
     decodedUint512.uint512 = new byte[uint512Size];
-    stream.read(decodedUint512.uint512, 0, uint512Size);
+    stream.readPaddedData(decodedUint512.uint512, 0, uint512Size);
     return decodedUint512;
   }
   public static Uint512 decode(XdrDataInputStream stream) throws IOException {

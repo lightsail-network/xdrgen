@@ -40,7 +40,7 @@ public class XdrString implements XdrElement {
       throw new IOException("String length " + size + " exceeds remaining input length " + remainingInputLen);
     }
     byte[] bytes = new byte[size];
-    stream.read(bytes);
+    stream.readPaddedData(bytes, 0, size);
     return new XdrString(bytes);
   }
 

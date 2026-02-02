@@ -44,7 +44,7 @@ public class Uint514 implements XdrElement {
       throw new IOException("uint514 size " + uint514Size + " exceeds remaining input length " + uint514RemainingInputLen);
     }
     decodedUint514.uint514 = new byte[uint514Size];
-    stream.read(decodedUint514.uint514, 0, uint514Size);
+    stream.readPaddedData(decodedUint514.uint514, 0, uint514Size);
     return decodedUint514;
   }
   public static Uint514 decode(XdrDataInputStream stream) throws IOException {
