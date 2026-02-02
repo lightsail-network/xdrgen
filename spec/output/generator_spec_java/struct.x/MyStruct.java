@@ -44,16 +44,23 @@ public class MyStruct implements XdrElement {
     someString.encode(stream);
     maxString.encode(stream);
   }
-  public static MyStruct decode(XdrDataInputStream stream) throws IOException {
+  public static MyStruct decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+    if (maxDepth <= 0) {
+      throw new IOException("Maximum decoding depth reached");
+    }
+    maxDepth -= 1;
     MyStruct decodedMyStruct = new MyStruct();
     decodedMyStruct.someInt = stream.readInt();
-    decodedMyStruct.aBigInt = Int64.decode(stream);
+    decodedMyStruct.aBigInt = Int64.decode(stream, maxDepth);
     int someOpaqueSize = 10;
     decodedMyStruct.someOpaque = new byte[someOpaqueSize];
     stream.read(decodedMyStruct.someOpaque, 0, someOpaqueSize);
-    decodedMyStruct.someString = XdrString.decode(stream, Integer.MAX_VALUE);
-    decodedMyStruct.maxString = XdrString.decode(stream, 100);
+    decodedMyStruct.someString = XdrString.decode(stream, maxDepth, Integer.MAX_VALUE);
+    decodedMyStruct.maxString = XdrString.decode(stream, maxDepth, 100);
     return decodedMyStruct;
+  }
+  public static MyStruct decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
   public static MyStruct fromXdrBase64(String xdr) throws IOException {
     byte[] bytes = Base64Factory.getInstance().decode(xdr);

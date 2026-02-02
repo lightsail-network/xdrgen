@@ -51,12 +51,19 @@ public class Nester implements XdrElement {
     nestedStruct.encode(stream);
     nestedUnion.encode(stream);
   }
-  public static Nester decode(XdrDataInputStream stream) throws IOException {
+  public static Nester decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+    if (maxDepth <= 0) {
+      throw new IOException("Maximum decoding depth reached");
+    }
+    maxDepth -= 1;
     Nester decodedNester = new Nester();
-    decodedNester.nestedEnum = NesterNestedEnum.decode(stream);
-    decodedNester.nestedStruct = NesterNestedStruct.decode(stream);
-    decodedNester.nestedUnion = NesterNestedUnion.decode(stream);
+    decodedNester.nestedEnum = NesterNestedEnum.decode(stream, maxDepth);
+    decodedNester.nestedStruct = NesterNestedStruct.decode(stream, maxDepth);
+    decodedNester.nestedUnion = NesterNestedUnion.decode(stream, maxDepth);
     return decodedNester;
+  }
+  public static Nester decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
   public static Nester fromXdrBase64(String xdr) throws IOException {
     byte[] bytes = Base64Factory.getInstance().decode(xdr);
@@ -93,7 +100,8 @@ public class Nester implements XdrElement {
         return value;
     }
 
-    public static NestedEnum decode(XdrDataInputStream stream) throws IOException {
+    public static NestedEnum decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+      // maxDepth is intentionally not checked - enums are leaf types with no recursive decoding
       int value = stream.readInt();
       switch (value) {
         case 0: return BLAH_1;
@@ -101,6 +109,10 @@ public class Nester implements XdrElement {
         default:
           throw new IllegalArgumentException("Unknown enum value: " + value);
       }
+    }
+
+    public static NestedEnum decode(XdrDataInputStream stream) throws IOException {
+      return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
     }
 
     public void encode(XdrDataOutputStream stream) throws IOException {
@@ -136,10 +148,17 @@ public class Nester implements XdrElement {
     public void encode(XdrDataOutputStream stream) throws IOException{
       stream.writeInt(blah);
     }
-    public static NesterNestedStruct decode(XdrDataInputStream stream) throws IOException {
+    public static NesterNestedStruct decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+      if (maxDepth <= 0) {
+        throw new IOException("Maximum decoding depth reached");
+      }
+      maxDepth -= 1;
       NesterNestedStruct decodedNesterNestedStruct = new NesterNestedStruct();
       decodedNesterNestedStruct.blah = stream.readInt();
       return decodedNesterNestedStruct;
+    }
+    public static NesterNestedStruct decode(XdrDataInputStream stream) throws IOException {
+      return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
     }
     public static NesterNestedStruct fromXdrBase64(String xdr) throws IOException {
       byte[] bytes = Base64Factory.getInstance().decode(xdr);
@@ -183,9 +202,13 @@ public class Nester implements XdrElement {
     break;
     }
     }
-    public static NesterNestedUnion decode(XdrDataInputStream stream) throws IOException {
+    public static NesterNestedUnion decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+    if (maxDepth <= 0) {
+      throw new IOException("Maximum decoding depth reached");
+    }
+    maxDepth -= 1;
     NesterNestedUnion decodedNesterNestedUnion = new NesterNestedUnion();
-    Color discriminant = Color.decode(stream);
+    Color discriminant = Color.decode(stream, maxDepth);
     decodedNesterNestedUnion.setDiscriminant(discriminant);
     switch (decodedNesterNestedUnion.getDiscriminant()) {
     case RED:
@@ -195,6 +218,9 @@ public class Nester implements XdrElement {
     break;
     }
       return decodedNesterNestedUnion;
+    }
+    public static NesterNestedUnion decode(XdrDataInputStream stream) throws IOException {
+      return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
     }
     public static NesterNestedUnion fromXdrBase64(String xdr) throws IOException {
       byte[] bytes = Base64Factory.getInstance().decode(xdr);

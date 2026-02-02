@@ -29,7 +29,11 @@ public class Uint513 implements XdrElement {
     stream.write(getUint513(), 0, uint513Size);
   }
 
-  public static Uint513 decode(XdrDataInputStream stream) throws IOException {
+  public static Uint513 decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+    if (maxDepth <= 0) {
+      throw new IOException("Maximum decoding depth reached");
+    }
+    maxDepth -= 1;
     Uint513 decodedUint513 = new Uint513();
     int uint513Size = stream.readInt();
     if (uint513Size < 0) {
@@ -45,6 +49,9 @@ public class Uint513 implements XdrElement {
     decodedUint513.uint513 = new byte[uint513Size];
     stream.read(decodedUint513.uint513, 0, uint513Size);
     return decodedUint513;
+  }
+  public static Uint513 decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
 
   public static Uint513 fromXdrBase64(String xdr) throws IOException {

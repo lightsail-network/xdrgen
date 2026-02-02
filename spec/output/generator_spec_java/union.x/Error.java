@@ -27,10 +27,17 @@ public class Error implements XdrElement {
     stream.writeInt(Error);
   }
 
-  public static Error decode(XdrDataInputStream stream) throws IOException {
+  public static Error decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+    if (maxDepth <= 0) {
+      throw new IOException("Maximum decoding depth reached");
+    }
+    maxDepth -= 1;
     Error decodedError = new Error();
     decodedError.Error = stream.readInt();
     return decodedError;
+  }
+  public static Error decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
 
   public static Error fromXdrBase64(String xdr) throws IOException {

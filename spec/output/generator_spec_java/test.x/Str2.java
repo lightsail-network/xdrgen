@@ -27,10 +27,17 @@ public class Str2 implements XdrElement {
     str2.encode(stream);
   }
 
-  public static Str2 decode(XdrDataInputStream stream) throws IOException {
+  public static Str2 decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+    if (maxDepth <= 0) {
+      throw new IOException("Maximum decoding depth reached");
+    }
+    maxDepth -= 1;
     Str2 decodedStr2 = new Str2();
-    decodedStr2.str2 = XdrString.decode(stream, Integer.MAX_VALUE);
+    decodedStr2.str2 = XdrString.decode(stream, maxDepth, Integer.MAX_VALUE);
     return decodedStr2;
+  }
+  public static Str2 decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
 
   public static Str2 fromXdrBase64(String xdr) throws IOException {

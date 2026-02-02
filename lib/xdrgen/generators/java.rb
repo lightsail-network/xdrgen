@@ -207,7 +207,8 @@ module Xdrgen
             return value;
         }
 
-        public static #{name_string enum.name} decode(XdrDataInputStream stream) throws IOException {
+        public static #{name_string enum.name} decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+          // maxDepth is intentionally not checked - enums are leaf types with no recursive decoding
           int value = stream.readInt();
           switch (value) {
         EOS
@@ -220,6 +221,10 @@ module Xdrgen
             default:
               throw new IllegalArgumentException("Unknown enum value: " + value);
           }
+        }
+
+        public static #{name_string enum.name} decode(XdrDataInputStream stream) throws IOException {
+          return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
         }
 
         public void encode(XdrDataOutputStream stream) throws IOException {
@@ -243,19 +248,31 @@ module Xdrgen
         end
         out.puts "}"
 
+        # decode with maxDepth parameter
         out.puts <<-EOS.strip_heredoc
-          public static #{name struct} decode(XdrDataInputStream stream) throws IOException {
+          public static #{name struct} decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+            if (maxDepth <= 0) {
+              throw new IOException("Maximum decoding depth reached");
+            }
+            maxDepth -= 1;
             #{name struct} decoded#{name struct} = new #{name struct}();
         EOS
         struct.members.each do |m|
           out.indent do
-            decode_member "decoded#{name struct}", m, out
+            decode_member "decoded#{name struct}", m, out, "maxDepth"
           end
         end
         out.indent do
           out.puts "return decoded#{name struct};"
         end
         out.puts "}"
+
+        # decode without maxDepth parameter (uses default)
+        out.puts <<-EOS.strip_heredoc
+          public static #{name struct} decode(XdrDataInputStream stream) throws IOException {
+            return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
+          }
+        EOS
 
         render_base64((name struct), out)
         out.break
@@ -270,15 +287,27 @@ module Xdrgen
         out.puts "}"
         out.break
 
+        # decode with maxDepth parameter
         out.puts <<-EOS.strip_heredoc
-          public static #{name typedef} decode(XdrDataInputStream stream) throws IOException {
+          public static #{name typedef} decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+            if (maxDepth <= 0) {
+              throw new IOException("Maximum decoding depth reached");
+            }
+            maxDepth -= 1;
             #{name typedef} decoded#{name typedef} = new #{name typedef}();
         EOS
         out.indent do
-          decode_member "decoded#{name typedef}", typedef, out
+          decode_member "decoded#{name typedef}", typedef, out, "maxDepth"
           out.puts "return decoded#{name typedef};"
         end
         out.puts "}"
+
+        # decode without maxDepth parameter (uses default)
+        out.puts <<-EOS.strip_heredoc
+          public static #{name typedef} decode(XdrDataInputStream stream) throws IOException {
+            return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
+          }
+        EOS
         out.break
         render_base64(typedef.name.camelize, out)
       end
@@ -329,12 +358,17 @@ module Xdrgen
         end
         out.puts "}\n}"
 
-        out.puts "public static #{name union} decode(XdrDataInputStream stream) throws IOException {"
+        # decode with maxDepth parameter
+        out.puts "public static #{name union} decode(XdrDataInputStream stream, int maxDepth) throws IOException {"
+        out.puts "if (maxDepth <= 0) {"
+        out.puts "  throw new IOException(\"Maximum decoding depth reached\");"
+        out.puts "}"
+        out.puts "maxDepth -= 1;"
         out.puts "#{name union} decoded#{name union} = new #{name union}();"
         if union.discriminant.type.is_a?(AST::Typespecs::Int)
           out.puts "Integer discriminant = stream.readInt();"
         else
-          out.puts "#{name union.discriminant.type} discriminant = #{name union.discriminant.type}.decode(stream);"
+          out.puts "#{name union.discriminant.type} discriminant = #{name union.discriminant.type}.decode(stream, maxDepth);"
         end
         out.puts "decoded#{name union}.setDiscriminant(discriminant);"
 
@@ -363,7 +397,7 @@ module Xdrgen
                 end
               end
           end
-          decode_member "decoded#{name union}", arm, out
+          decode_member "decoded#{name union}", arm, out, "maxDepth"
           out.puts "break;"
         end
         out.puts "}\n"
@@ -371,6 +405,13 @@ module Xdrgen
           out.puts "return decoded#{name union};"
         end
         out.puts "}"
+
+        # decode without maxDepth parameter (uses default)
+        out.puts <<-EOS.strip_heredoc
+          public static #{name union} decode(XdrDataInputStream stream) throws IOException {
+            return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
+          }
+        EOS
         render_base64((name union), out)
         out.break
       end
@@ -482,7 +523,7 @@ module Xdrgen
         end
       end
 
-      def decode_member(value, member, out)
+      def decode_member(value, member, out, depth_var = nil)
         case member.declaration
         when AST::Declarations::Void ;
           return
@@ -543,27 +584,27 @@ module Xdrgen
           out.puts <<-EOS.strip_heredoc
             #{value}.#{member.name} = new #{type_string member.type}[#{member.name}Size];
             for (int i = 0; i < #{member.name}Size; i++) {
-              #{value}.#{member.name}[i] = #{decode_type member.declaration};
+              #{value}.#{member.name}[i] = #{decode_type member.declaration, depth_var};
             }
           EOS
         else
-          out.puts "#{value}.#{member.name} = #{decode_type member.declaration};"
+          out.puts "#{value}.#{member.name} = #{decode_type member.declaration, depth_var};"
         end
         if member.type.sub_type == :optional
           out.puts "}"
         end
       end
 
-      def decode_type(decl)
+      def decode_type(decl, depth_var = nil)
         case decl.type
         when AST::Typespecs::Int ;
           "stream.readInt()"
         when AST::Typespecs::UnsignedInt ;
-          "XdrUnsignedInteger.decode(stream)"
+          depth_var ? "XdrUnsignedInteger.decode(stream, #{depth_var})" : "XdrUnsignedInteger.decode(stream)"
         when AST::Typespecs::Hyper ;
           "stream.readLong()"
         when AST::Typespecs::UnsignedHyper ;
-          "XdrUnsignedHyperInteger.decode(stream)"
+          depth_var ? "XdrUnsignedHyperInteger.decode(stream, #{depth_var})" : "XdrUnsignedHyperInteger.decode(stream)"
         when AST::Typespecs::Float ;
           "stream.readFloat()"
         when AST::Typespecs::Double ;
@@ -573,11 +614,11 @@ module Xdrgen
         when AST::Typespecs::Bool ;
           "stream.readBoolean()"
         when AST::Typespecs::String ;
-          "XdrString.decode(stream, #{(convert_constant decl.size) || 'Integer.MAX_VALUE'})"
+          depth_var ? "XdrString.decode(stream, #{depth_var}, #{(convert_constant decl.size) || 'Integer.MAX_VALUE'})" : "XdrString.decode(stream, #{(convert_constant decl.size) || 'Integer.MAX_VALUE'})"
         when AST::Typespecs::Simple ;
-          "#{name decl.type.resolved_type}.decode(stream)"
+          depth_var ? "#{name decl.type.resolved_type}.decode(stream, #{depth_var})" : "#{name decl.type.resolved_type}.decode(stream)"
         when AST::Concerns::NestedDefinition ;
-          "#{name decl.type}.decode(stream)"
+          depth_var ? "#{name decl.type}.decode(stream, #{depth_var})" : "#{name decl.type}.decode(stream)"
         else
           raise "Unknown typespec: #{decl.type.class.name}"
         end

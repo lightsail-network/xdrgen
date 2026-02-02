@@ -27,10 +27,17 @@ public class Int2 implements XdrElement {
     stream.writeLong(int2);
   }
 
-  public static Int2 decode(XdrDataInputStream stream) throws IOException {
+  public static Int2 decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+    if (maxDepth <= 0) {
+      throw new IOException("Maximum decoding depth reached");
+    }
+    maxDepth -= 1;
     Int2 decodedInt2 = new Int2();
     decodedInt2.int2 = stream.readLong();
     return decodedInt2;
+  }
+  public static Int2 decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
 
   public static Int2 fromXdrBase64(String xdr) throws IOException {

@@ -50,13 +50,17 @@ public class IntUnion implements XdrElement {
   break;
   }
   }
-  public static IntUnion decode(XdrDataInputStream stream) throws IOException {
+  public static IntUnion decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+  if (maxDepth <= 0) {
+    throw new IOException("Maximum decoding depth reached");
+  }
+  maxDepth -= 1;
   IntUnion decodedIntUnion = new IntUnion();
   Integer discriminant = stream.readInt();
   decodedIntUnion.setDiscriminant(discriminant);
   switch (decodedIntUnion.getDiscriminant()) {
   case 0:
-  decodedIntUnion.error = Error.decode(stream);
+  decodedIntUnion.error = Error.decode(stream, maxDepth);
   break;
   case 1:
   int thingsSize = stream.readInt();
@@ -69,11 +73,14 @@ public class IntUnion implements XdrElement {
   }
   decodedIntUnion.things = new Multi[thingsSize];
   for (int i = 0; i < thingsSize; i++) {
-    decodedIntUnion.things[i] = Multi.decode(stream);
+    decodedIntUnion.things[i] = Multi.decode(stream, maxDepth);
   }
   break;
   }
     return decodedIntUnion;
+  }
+  public static IntUnion decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
   public static IntUnion fromXdrBase64(String xdr) throws IOException {
     byte[] bytes = Base64Factory.getInstance().decode(xdr);

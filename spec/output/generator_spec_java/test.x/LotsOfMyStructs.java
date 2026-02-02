@@ -35,7 +35,11 @@ public class LotsOfMyStructs implements XdrElement {
       members[i].encode(stream);
     }
   }
-  public static LotsOfMyStructs decode(XdrDataInputStream stream) throws IOException {
+  public static LotsOfMyStructs decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+    if (maxDepth <= 0) {
+      throw new IOException("Maximum decoding depth reached");
+    }
+    maxDepth -= 1;
     LotsOfMyStructs decodedLotsOfMyStructs = new LotsOfMyStructs();
     int membersSize = stream.readInt();
     if (membersSize < 0) {
@@ -47,9 +51,12 @@ public class LotsOfMyStructs implements XdrElement {
     }
     decodedLotsOfMyStructs.members = new MyStruct[membersSize];
     for (int i = 0; i < membersSize; i++) {
-      decodedLotsOfMyStructs.members[i] = MyStruct.decode(stream);
+      decodedLotsOfMyStructs.members[i] = MyStruct.decode(stream, maxDepth);
     }
     return decodedLotsOfMyStructs;
+  }
+  public static LotsOfMyStructs decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
   public static LotsOfMyStructs fromXdrBase64(String xdr) throws IOException {
     byte[] bytes = Base64Factory.getInstance().decode(xdr);

@@ -32,13 +32,20 @@ public class OptHash1 implements XdrElement {
     }
   }
 
-  public static OptHash1 decode(XdrDataInputStream stream) throws IOException {
+  public static OptHash1 decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+    if (maxDepth <= 0) {
+      throw new IOException("Maximum decoding depth reached");
+    }
+    maxDepth -= 1;
     OptHash1 decodedOptHash1 = new OptHash1();
     boolean optHash1Present = stream.readBoolean();
     if (optHash1Present) {
-    decodedOptHash1.optHash1 = Hash.decode(stream);
+    decodedOptHash1.optHash1 = Hash.decode(stream, maxDepth);
     }
     return decodedOptHash1;
+  }
+  public static OptHash1 decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
 
   public static OptHash1 fromXdrBase64(String xdr) throws IOException {

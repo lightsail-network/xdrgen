@@ -31,7 +31,11 @@ public class Hashes3 implements XdrElement {
     }
   }
 
-  public static Hashes3 decode(XdrDataInputStream stream) throws IOException {
+  public static Hashes3 decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+    if (maxDepth <= 0) {
+      throw new IOException("Maximum decoding depth reached");
+    }
+    maxDepth -= 1;
     Hashes3 decodedHashes3 = new Hashes3();
     int Hashes3Size = stream.readInt();
     if (Hashes3Size < 0) {
@@ -43,9 +47,12 @@ public class Hashes3 implements XdrElement {
     }
     decodedHashes3.Hashes3 = new Hash[Hashes3Size];
     for (int i = 0; i < Hashes3Size; i++) {
-      decodedHashes3.Hashes3[i] = Hash.decode(stream);
+      decodedHashes3.Hashes3[i] = Hash.decode(stream, maxDepth);
     }
     return decodedHashes3;
+  }
+  public static Hashes3 decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
 
   public static Hashes3 fromXdrBase64(String xdr) throws IOException {

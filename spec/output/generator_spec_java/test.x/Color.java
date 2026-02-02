@@ -34,7 +34,8 @@ public enum Color implements XdrElement {
       return value;
   }
 
-  public static Color decode(XdrDataInputStream stream) throws IOException {
+  public static Color decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+    // maxDepth is intentionally not checked - enums are leaf types with no recursive decoding
     int value = stream.readInt();
     switch (value) {
       case 0: return RED;
@@ -43,6 +44,10 @@ public enum Color implements XdrElement {
       default:
         throw new IllegalArgumentException("Unknown enum value: " + value);
     }
+  }
+
+  public static Color decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
 
   public void encode(XdrDataOutputStream stream) throws IOException {

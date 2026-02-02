@@ -56,21 +56,28 @@ public class MyUnion implements XdrElement {
   break;
   }
   }
-  public static MyUnion decode(XdrDataInputStream stream) throws IOException {
+  public static MyUnion decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+  if (maxDepth <= 0) {
+    throw new IOException("Maximum decoding depth reached");
+  }
+  maxDepth -= 1;
   MyUnion decodedMyUnion = new MyUnion();
-  UnionKey discriminant = UnionKey.decode(stream);
+  UnionKey discriminant = UnionKey.decode(stream, maxDepth);
   decodedMyUnion.setDiscriminant(discriminant);
   switch (decodedMyUnion.getDiscriminant()) {
   case ONE:
-  decodedMyUnion.one = MyUnionOne.decode(stream);
+  decodedMyUnion.one = MyUnionOne.decode(stream, maxDepth);
   break;
   case TWO:
-  decodedMyUnion.two = MyUnionTwo.decode(stream);
+  decodedMyUnion.two = MyUnionTwo.decode(stream, maxDepth);
   break;
   case OFFER:
   break;
   }
     return decodedMyUnion;
+  }
+  public static MyUnion decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
   public static MyUnion fromXdrBase64(String xdr) throws IOException {
     byte[] bytes = Base64Factory.getInstance().decode(xdr);
@@ -101,10 +108,17 @@ public class MyUnion implements XdrElement {
     public void encode(XdrDataOutputStream stream) throws IOException{
       stream.writeInt(someInt);
     }
-    public static MyUnionOne decode(XdrDataInputStream stream) throws IOException {
+    public static MyUnionOne decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+      if (maxDepth <= 0) {
+        throw new IOException("Maximum decoding depth reached");
+      }
+      maxDepth -= 1;
       MyUnionOne decodedMyUnionOne = new MyUnionOne();
       decodedMyUnionOne.someInt = stream.readInt();
       return decodedMyUnionOne;
+    }
+    public static MyUnionOne decode(XdrDataInputStream stream) throws IOException {
+      return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
     }
     public static MyUnionOne fromXdrBase64(String xdr) throws IOException {
       byte[] bytes = Base64Factory.getInstance().decode(xdr);
@@ -139,11 +153,18 @@ public class MyUnion implements XdrElement {
       stream.writeInt(someInt);
       foo.encode(stream);
     }
-    public static MyUnionTwo decode(XdrDataInputStream stream) throws IOException {
+    public static MyUnionTwo decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+      if (maxDepth <= 0) {
+        throw new IOException("Maximum decoding depth reached");
+      }
+      maxDepth -= 1;
       MyUnionTwo decodedMyUnionTwo = new MyUnionTwo();
       decodedMyUnionTwo.someInt = stream.readInt();
-      decodedMyUnionTwo.foo = Foo.decode(stream);
+      decodedMyUnionTwo.foo = Foo.decode(stream, maxDepth);
       return decodedMyUnionTwo;
+    }
+    public static MyUnionTwo decode(XdrDataInputStream stream) throws IOException {
+      return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
     }
     public static MyUnionTwo fromXdrBase64(String xdr) throws IOException {
       byte[] bytes = Base64Factory.getInstance().decode(xdr);

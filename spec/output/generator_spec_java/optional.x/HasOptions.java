@@ -52,7 +52,11 @@ public class HasOptions implements XdrElement {
     stream.writeInt(0);
     }
   }
-  public static HasOptions decode(XdrDataInputStream stream) throws IOException {
+  public static HasOptions decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+    if (maxDepth <= 0) {
+      throw new IOException("Maximum decoding depth reached");
+    }
+    maxDepth -= 1;
     HasOptions decodedHasOptions = new HasOptions();
     boolean firstOptionPresent = stream.readBoolean();
     if (firstOptionPresent) {
@@ -64,9 +68,12 @@ public class HasOptions implements XdrElement {
     }
     boolean thirdOptionPresent = stream.readBoolean();
     if (thirdOptionPresent) {
-    decodedHasOptions.thirdOption = Arr.decode(stream);
+    decodedHasOptions.thirdOption = Arr.decode(stream, maxDepth);
     }
     return decodedHasOptions;
+  }
+  public static HasOptions decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
   public static HasOptions fromXdrBase64(String xdr) throws IOException {
     byte[] bytes = Base64Factory.getInstance().decode(xdr);

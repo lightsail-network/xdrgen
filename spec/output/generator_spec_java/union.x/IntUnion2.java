@@ -27,10 +27,17 @@ public class IntUnion2 implements XdrElement {
     IntUnion2.encode(stream);
   }
 
-  public static IntUnion2 decode(XdrDataInputStream stream) throws IOException {
+  public static IntUnion2 decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+    if (maxDepth <= 0) {
+      throw new IOException("Maximum decoding depth reached");
+    }
+    maxDepth -= 1;
     IntUnion2 decodedIntUnion2 = new IntUnion2();
-    decodedIntUnion2.IntUnion2 = IntUnion.decode(stream);
+    decodedIntUnion2.IntUnion2 = IntUnion.decode(stream, maxDepth);
     return decodedIntUnion2;
+  }
+  public static IntUnion2 decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
 
   public static IntUnion2 fromXdrBase64(String xdr) throws IOException {

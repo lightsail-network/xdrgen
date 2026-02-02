@@ -8,6 +8,9 @@ import lombok.Setter;
 
 public class XdrDataInputStream extends DataInputStream {
 
+    /** Default maximum decoding depth to prevent stack overflow from deeply nested structures. */
+    public static final int DEFAULT_MAX_DEPTH = 200;
+
     // The underlying input stream
     private final XdrInputStream mIn;
 

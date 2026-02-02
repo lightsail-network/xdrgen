@@ -26,7 +26,8 @@ public class XdrString implements XdrElement {
     stream.write(this.bytes, 0, this.bytes.length);
   }
 
-  public static XdrString decode(XdrDataInputStream stream, int maxSize) throws IOException {
+  public static XdrString decode(XdrDataInputStream stream, int maxDepth, int maxSize) throws IOException {
+    // maxDepth is intentionally not checked - XdrString is a leaf type with no recursive decoding
     int size = stream.readInt();
     if (size < 0) {
       throw new IOException("String length " + size + " is negative");
@@ -41,6 +42,10 @@ public class XdrString implements XdrElement {
     byte[] bytes = new byte[size];
     stream.read(bytes);
     return new XdrString(bytes);
+  }
+
+  public static XdrString decode(XdrDataInputStream stream, int maxSize) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH, maxSize);
   }
 
   public static XdrString fromXdrBase64(String xdr, int maxSize) throws IOException {

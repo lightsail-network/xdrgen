@@ -49,16 +49,23 @@ public class MyStruct implements XdrElement {
     stream.writeDouble(field6);
     stream.writeInt(field7 ? 1 : 0);
   }
-  public static MyStruct decode(XdrDataInputStream stream) throws IOException {
+  public static MyStruct decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+    if (maxDepth <= 0) {
+      throw new IOException("Maximum decoding depth reached");
+    }
+    maxDepth -= 1;
     MyStruct decodedMyStruct = new MyStruct();
-    decodedMyStruct.field1 = Uint512.decode(stream);
-    decodedMyStruct.field2 = OptHash1.decode(stream);
-    decodedMyStruct.field3 = Int1.decode(stream);
-    decodedMyStruct.field4 = XdrUnsignedInteger.decode(stream);
+    decodedMyStruct.field1 = Uint512.decode(stream, maxDepth);
+    decodedMyStruct.field2 = OptHash1.decode(stream, maxDepth);
+    decodedMyStruct.field3 = Int1.decode(stream, maxDepth);
+    decodedMyStruct.field4 = XdrUnsignedInteger.decode(stream, maxDepth);
     decodedMyStruct.field5 = stream.readFloat();
     decodedMyStruct.field6 = stream.readDouble();
     decodedMyStruct.field7 = stream.readBoolean();
     return decodedMyStruct;
+  }
+  public static MyStruct decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
   public static MyStruct fromXdrBase64(String xdr) throws IOException {
     byte[] bytes = Base64Factory.getInstance().decode(xdr);

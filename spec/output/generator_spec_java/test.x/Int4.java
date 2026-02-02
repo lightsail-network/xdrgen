@@ -27,10 +27,17 @@ public class Int4 implements XdrElement {
     int4.encode(stream);
   }
 
-  public static Int4 decode(XdrDataInputStream stream) throws IOException {
+  public static Int4 decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+    if (maxDepth <= 0) {
+      throw new IOException("Maximum decoding depth reached");
+    }
+    maxDepth -= 1;
     Int4 decodedInt4 = new Int4();
-    decodedInt4.int4 = XdrUnsignedHyperInteger.decode(stream);
+    decodedInt4.int4 = XdrUnsignedHyperInteger.decode(stream, maxDepth);
     return decodedInt4;
+  }
+  public static Int4 decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
 
   public static Int4 fromXdrBase64(String xdr) throws IOException {

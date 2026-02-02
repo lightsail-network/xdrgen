@@ -27,10 +27,17 @@ public class Multi implements XdrElement {
     stream.writeInt(Multi);
   }
 
-  public static Multi decode(XdrDataInputStream stream) throws IOException {
+  public static Multi decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+    if (maxDepth <= 0) {
+      throw new IOException("Maximum decoding depth reached");
+    }
+    maxDepth -= 1;
     Multi decodedMulti = new Multi();
     decodedMulti.Multi = stream.readInt();
     return decodedMulti;
+  }
+  public static Multi decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
 
   public static Multi fromXdrBase64(String xdr) throws IOException {

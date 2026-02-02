@@ -28,12 +28,19 @@ public class Hash implements XdrElement {
     stream.write(getHash(), 0, HashSize);
   }
 
-  public static Hash decode(XdrDataInputStream stream) throws IOException {
+  public static Hash decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+    if (maxDepth <= 0) {
+      throw new IOException("Maximum decoding depth reached");
+    }
+    maxDepth -= 1;
     Hash decodedHash = new Hash();
     int HashSize = 32;
     decodedHash.Hash = new byte[HashSize];
     stream.read(decodedHash.Hash, 0, HashSize);
     return decodedHash;
+  }
+  public static Hash decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
 
   public static Hash fromXdrBase64(String xdr) throws IOException {

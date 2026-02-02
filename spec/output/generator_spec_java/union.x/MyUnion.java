@@ -51,13 +51,17 @@ public class MyUnion implements XdrElement {
   break;
   }
   }
-  public static MyUnion decode(XdrDataInputStream stream) throws IOException {
+  public static MyUnion decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+  if (maxDepth <= 0) {
+    throw new IOException("Maximum decoding depth reached");
+  }
+  maxDepth -= 1;
   MyUnion decodedMyUnion = new MyUnion();
-  UnionKey discriminant = UnionKey.decode(stream);
+  UnionKey discriminant = UnionKey.decode(stream, maxDepth);
   decodedMyUnion.setDiscriminant(discriminant);
   switch (decodedMyUnion.getDiscriminant()) {
   case ERROR:
-  decodedMyUnion.error = Error.decode(stream);
+  decodedMyUnion.error = Error.decode(stream, maxDepth);
   break;
   case MULTI:
   int thingsSize = stream.readInt();
@@ -70,11 +74,14 @@ public class MyUnion implements XdrElement {
   }
   decodedMyUnion.things = new Multi[thingsSize];
   for (int i = 0; i < thingsSize; i++) {
-    decodedMyUnion.things[i] = Multi.decode(stream);
+    decodedMyUnion.things[i] = Multi.decode(stream, maxDepth);
   }
   break;
   }
     return decodedMyUnion;
+  }
+  public static MyUnion decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
   public static MyUnion fromXdrBase64(String xdr) throws IOException {
     byte[] bytes = Base64Factory.getInstance().decode(xdr);

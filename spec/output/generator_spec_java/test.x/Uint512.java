@@ -28,12 +28,19 @@ public class Uint512 implements XdrElement {
     stream.write(getUint512(), 0, uint512Size);
   }
 
-  public static Uint512 decode(XdrDataInputStream stream) throws IOException {
+  public static Uint512 decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+    if (maxDepth <= 0) {
+      throw new IOException("Maximum decoding depth reached");
+    }
+    maxDepth -= 1;
     Uint512 decodedUint512 = new Uint512();
     int uint512Size = 64;
     decodedUint512.uint512 = new byte[uint512Size];
     stream.read(decodedUint512.uint512, 0, uint512Size);
     return decodedUint512;
+  }
+  public static Uint512 decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
 
   public static Uint512 fromXdrBase64(String xdr) throws IOException {

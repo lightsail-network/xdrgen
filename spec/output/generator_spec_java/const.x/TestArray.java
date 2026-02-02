@@ -30,7 +30,11 @@ public class TestArray implements XdrElement {
     }
   }
 
-  public static TestArray decode(XdrDataInputStream stream) throws IOException {
+  public static TestArray decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+    if (maxDepth <= 0) {
+      throw new IOException("Maximum decoding depth reached");
+    }
+    maxDepth -= 1;
     TestArray decodedTestArray = new TestArray();
     int TestArraySize = Constants.FOO;
     decodedTestArray.TestArray = new Integer[TestArraySize];
@@ -38,6 +42,9 @@ public class TestArray implements XdrElement {
       decodedTestArray.TestArray[i] = stream.readInt();
     }
     return decodedTestArray;
+  }
+  public static TestArray decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
 
   public static TestArray fromXdrBase64(String xdr) throws IOException {

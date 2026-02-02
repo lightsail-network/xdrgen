@@ -31,10 +31,17 @@ public class HasStuff implements XdrElement {
   public void encode(XdrDataOutputStream stream) throws IOException{
     data.encode(stream);
   }
-  public static HasStuff decode(XdrDataInputStream stream) throws IOException {
+  public static HasStuff decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+    if (maxDepth <= 0) {
+      throw new IOException("Maximum decoding depth reached");
+    }
+    maxDepth -= 1;
     HasStuff decodedHasStuff = new HasStuff();
-    decodedHasStuff.data = LotsOfMyStructs.decode(stream);
+    decodedHasStuff.data = LotsOfMyStructs.decode(stream, maxDepth);
     return decodedHasStuff;
+  }
+  public static HasStuff decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
   public static HasStuff fromXdrBase64(String xdr) throws IOException {
     byte[] bytes = Base64Factory.getInstance().decode(xdr);

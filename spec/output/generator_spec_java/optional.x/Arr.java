@@ -30,7 +30,11 @@ public class Arr implements XdrElement {
     }
   }
 
-  public static Arr decode(XdrDataInputStream stream) throws IOException {
+  public static Arr decode(XdrDataInputStream stream, int maxDepth) throws IOException {
+    if (maxDepth <= 0) {
+      throw new IOException("Maximum decoding depth reached");
+    }
+    maxDepth -= 1;
     Arr decodedArr = new Arr();
     int ArrSize = 2;
     decodedArr.Arr = new Integer[ArrSize];
@@ -38,6 +42,9 @@ public class Arr implements XdrElement {
       decodedArr.Arr[i] = stream.readInt();
     }
     return decodedArr;
+  }
+  public static Arr decode(XdrDataInputStream stream) throws IOException {
+    return decode(stream, XdrDataInputStream.DEFAULT_MAX_DEPTH);
   }
 
   public static Arr fromXdrBase64(String xdr) throws IOException {
