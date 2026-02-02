@@ -25,6 +25,9 @@ public class Arr implements XdrElement {
   private Integer[] Arr;
   public void encode(XdrDataOutputStream stream) throws IOException {
     int ArrSize = getArr().length;
+    if (ArrSize != 2) {
+      throw new IOException("Arr size " + ArrSize + " does not match fixed size 2");
+    }
     for (int i = 0; i < ArrSize; i++) {
       stream.writeInt(Arr[i]);
     }

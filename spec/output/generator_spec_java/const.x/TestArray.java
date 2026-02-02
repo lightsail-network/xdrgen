@@ -25,6 +25,9 @@ public class TestArray implements XdrElement {
   private Integer[] TestArray;
   public void encode(XdrDataOutputStream stream) throws IOException {
     int TestArraySize = getTestArray().length;
+    if (TestArraySize != Constants.FOO) {
+      throw new IOException("TestArray size " + TestArraySize + " does not match fixed size FOO");
+    }
     for (int i = 0; i < TestArraySize; i++) {
       stream.writeInt(TestArray[i]);
     }

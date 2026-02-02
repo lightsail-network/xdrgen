@@ -40,6 +40,9 @@ public class MyStruct implements XdrElement {
     stream.writeInt(someInt);
     aBigInt.encode(stream);
     int someOpaqueSize = someOpaque.length;
+    if (someOpaqueSize != 10) {
+      throw new IOException("someOpaque size " + someOpaqueSize + " does not match fixed size 10");
+    }
     stream.write(getSomeOpaque(), 0, someOpaqueSize);
     someString.encode(stream);
     int maxStringSize = maxString.getBytes().length;

@@ -25,6 +25,9 @@ public class Hash implements XdrElement {
   private byte[] Hash;
   public void encode(XdrDataOutputStream stream) throws IOException {
     int HashSize = Hash.length;
+    if (HashSize != 32) {
+      throw new IOException("Hash size " + HashSize + " does not match fixed size 32");
+    }
     stream.write(getHash(), 0, HashSize);
   }
 

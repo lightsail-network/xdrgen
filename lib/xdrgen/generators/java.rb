@@ -468,7 +468,11 @@ module Xdrgen
         case member.declaration
         when AST::Declarations::Opaque ;
           out.puts "int #{member.name}Size = #{member.name}.length;"
-          unless member.declaration.fixed?
+          if member.declaration.fixed?
+            out.puts "if (#{member.name}Size != #{convert_constant member.declaration.size}) {"
+            out.puts "  throw new IOException(\"#{member.name} size \" + #{member.name}Size + \" does not match fixed size #{member.declaration.size}\");"
+            out.puts "}"
+          else
             max_size = member.declaration.resolved_size
             if max_size
               out.puts "if (#{member.name}Size > #{convert_constant max_size}) {"
@@ -482,7 +486,11 @@ module Xdrgen
           EOS
         when AST::Declarations::Array ;
           out.puts "int #{member.name}Size = get#{member.name.slice(0,1).capitalize+member.name.slice(1..-1)}().length;"
-          unless member.declaration.fixed?
+          if member.declaration.fixed?
+            out.puts "if (#{member.name}Size != #{convert_constant member.declaration.size}) {"
+            out.puts "  throw new IOException(\"#{member.name} size \" + #{member.name}Size + \" does not match fixed size #{member.declaration.size}\");"
+            out.puts "}"
+          else
             max_size = member.declaration.resolved_size
             if max_size
               out.puts "if (#{member.name}Size > #{convert_constant max_size}) {"

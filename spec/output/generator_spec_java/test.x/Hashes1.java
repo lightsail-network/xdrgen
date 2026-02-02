@@ -25,6 +25,9 @@ public class Hashes1 implements XdrElement {
   private Hash[] Hashes1;
   public void encode(XdrDataOutputStream stream) throws IOException {
     int Hashes1Size = getHashes1().length;
+    if (Hashes1Size != 12) {
+      throw new IOException("Hashes1 size " + Hashes1Size + " does not match fixed size 12");
+    }
     for (int i = 0; i < Hashes1Size; i++) {
       Hashes1[i].encode(stream);
     }

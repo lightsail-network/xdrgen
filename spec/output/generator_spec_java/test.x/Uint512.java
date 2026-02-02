@@ -25,6 +25,9 @@ public class Uint512 implements XdrElement {
   private byte[] uint512;
   public void encode(XdrDataOutputStream stream) throws IOException {
     int uint512Size = uint512.length;
+    if (uint512Size != 64) {
+      throw new IOException("uint512 size " + uint512Size + " does not match fixed size 64");
+    }
     stream.write(getUint512(), 0, uint512Size);
   }
 
