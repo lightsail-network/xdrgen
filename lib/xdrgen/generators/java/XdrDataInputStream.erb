@@ -165,7 +165,11 @@ public class XdrDataInputStream extends DataInputStream {
             int read = mIn.read(b, off, len);
             if (read > 0) {
                 mCount += read;
-                pad();
+                // Note: padding is NOT automatically applied here.
+                // For opaque/string data, use XdrDataInputStream.readPaddedData() which
+                // handles short reads correctly and applies padding after all data is read.
+                // Primitive types (int, long, float, double) are naturally 4/8-byte aligned
+                // and don't need padding between reads.
             }
             return read;
         }
