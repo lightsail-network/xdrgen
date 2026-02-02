@@ -42,6 +42,10 @@ public class MyStruct implements XdrElement {
     int someOpaqueSize = someOpaque.length;
     stream.write(getSomeOpaque(), 0, someOpaqueSize);
     someString.encode(stream);
+    int maxStringSize = maxString.getBytes().length;
+    if (maxStringSize > 100) {
+      throw new IOException("maxString size " + maxStringSize + " exceeds max size 100");
+    }
     maxString.encode(stream);
   }
   public static MyStruct decode(XdrDataInputStream stream, int maxDepth) throws IOException {

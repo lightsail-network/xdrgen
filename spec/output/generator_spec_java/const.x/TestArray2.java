@@ -25,6 +25,9 @@ public class TestArray2 implements XdrElement {
   private Integer[] TestArray2;
   public void encode(XdrDataOutputStream stream) throws IOException {
     int TestArray2Size = getTestArray2().length;
+    if (TestArray2Size > 1) {
+      throw new IOException("TestArray2 size " + TestArray2Size + " exceeds max size 1");
+    }
     stream.writeInt(TestArray2Size);
     for (int i = 0; i < TestArray2Size; i++) {
       stream.writeInt(TestArray2[i]);

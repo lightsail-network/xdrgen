@@ -469,6 +469,12 @@ module Xdrgen
         when AST::Declarations::Opaque ;
           out.puts "int #{member.name}Size = #{member.name}.length;"
           unless member.declaration.fixed?
+            max_size = member.declaration.resolved_size
+            if max_size
+              out.puts "if (#{member.name}Size > #{convert_constant max_size}) {"
+              out.puts "  throw new IOException(\"#{member.name} size \" + #{member.name}Size + \" exceeds max size #{max_size}\");"
+              out.puts "}"
+            end
             out.puts "stream.writeInt(#{member.name}Size);"
           end
           out.puts <<-EOS.strip_heredoc
@@ -477,6 +483,12 @@ module Xdrgen
         when AST::Declarations::Array ;
           out.puts "int #{member.name}Size = get#{member.name.slice(0,1).capitalize+member.name.slice(1..-1)}().length;"
           unless member.declaration.fixed?
+            max_size = member.declaration.resolved_size
+            if max_size
+              out.puts "if (#{member.name}Size > #{convert_constant max_size}) {"
+              out.puts "  throw new IOException(\"#{member.name} size \" + #{member.name}Size + \" exceeds max size #{max_size}\");"
+              out.puts "}"
+            end
             out.puts "stream.writeInt(#{member.name}Size);"
           end
           out.puts <<-EOS.strip_heredoc
@@ -484,6 +496,15 @@ module Xdrgen
               #{encode_type member.declaration.type, "#{member.name}[i]"};
             }
           EOS
+        when AST::Declarations::String ;
+          max_size = member.declaration.resolved_size
+          if max_size
+            out.puts "int #{member.name}Size = #{member.name}.getBytes().length;"
+            out.puts "if (#{member.name}Size > #{convert_constant max_size}) {"
+            out.puts "  throw new IOException(\"#{member.name} size \" + #{member.name}Size + \" exceeds max size #{max_size}\");"
+            out.puts "}"
+          end
+          out.puts "#{member.name}.encode(stream);"
         else
           out.puts "#{encode_type member.declaration.type, "#{member.name}"};"
         end

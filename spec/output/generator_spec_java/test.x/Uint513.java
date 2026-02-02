@@ -25,6 +25,9 @@ public class Uint513 implements XdrElement {
   private byte[] uint513;
   public void encode(XdrDataOutputStream stream) throws IOException {
     int uint513Size = uint513.length;
+    if (uint513Size > 64) {
+      throw new IOException("uint513 size " + uint513Size + " exceeds max size 64");
+    }
     stream.writeInt(uint513Size);
     stream.write(getUint513(), 0, uint513Size);
   }

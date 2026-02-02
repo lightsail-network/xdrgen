@@ -24,6 +24,10 @@ import lombok.AllArgsConstructor;
 public class Str implements XdrElement {
   private XdrString str;
   public void encode(XdrDataOutputStream stream) throws IOException {
+    int strSize = str.getBytes().length;
+    if (strSize > 64) {
+      throw new IOException("str size " + strSize + " exceeds max size 64");
+    }
     str.encode(stream);
   }
 
