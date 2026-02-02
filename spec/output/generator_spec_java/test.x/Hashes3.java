@@ -37,6 +37,10 @@ public class Hashes3 implements XdrElement {
     if (Hashes3Size < 0) {
       throw new IOException("Hashes3 size " + Hashes3Size + " is negative");
     }
+    int Hashes3RemainingInputLen = stream.getRemainingInputLen();
+    if (Hashes3RemainingInputLen >= 0 && Hashes3RemainingInputLen < Hashes3Size) {
+      throw new IOException("Hashes3 size " + Hashes3Size + " exceeds remaining input length " + Hashes3RemainingInputLen);
+    }
     decodedHashes3.Hashes3 = new Hash[Hashes3Size];
     for (int i = 0; i < Hashes3Size; i++) {
       decodedHashes3.Hashes3[i] = Hash.decode(stream);
@@ -52,6 +56,7 @@ public class Hashes3 implements XdrElement {
   public static Hashes3 fromXdrByteArray(byte[] xdr) throws IOException {
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(xdr);
     XdrDataInputStream xdrDataInputStream = new XdrDataInputStream(byteArrayInputStream);
+    xdrDataInputStream.setMaxInputLen(xdr.length);
     return decode(xdrDataInputStream);
   }
 }

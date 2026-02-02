@@ -56,6 +56,7 @@ public enum Color3 implements XdrElement {
   public static Color3 fromXdrByteArray(byte[] xdr) throws IOException {
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(xdr);
     XdrDataInputStream xdrDataInputStream = new XdrDataInputStream(byteArrayInputStream);
+    xdrDataInputStream.setMaxInputLen(xdr.length);
     return decode(xdrDataInputStream);
   }
 }

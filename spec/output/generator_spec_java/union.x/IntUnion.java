@@ -63,6 +63,10 @@ public class IntUnion implements XdrElement {
   if (thingsSize < 0) {
     throw new IOException("things size " + thingsSize + " is negative");
   }
+  int thingsRemainingInputLen = stream.getRemainingInputLen();
+  if (thingsRemainingInputLen >= 0 && thingsRemainingInputLen < thingsSize) {
+    throw new IOException("things size " + thingsSize + " exceeds remaining input length " + thingsRemainingInputLen);
+  }
   decodedIntUnion.things = new Multi[thingsSize];
   for (int i = 0; i < thingsSize; i++) {
     decodedIntUnion.things[i] = Multi.decode(stream);
@@ -79,6 +83,7 @@ public class IntUnion implements XdrElement {
   public static IntUnion fromXdrByteArray(byte[] xdr) throws IOException {
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(xdr);
     XdrDataInputStream xdrDataInputStream = new XdrDataInputStream(byteArrayInputStream);
+    xdrDataInputStream.setMaxInputLen(xdr.length);
     return decode(xdrDataInputStream);
   }
 }

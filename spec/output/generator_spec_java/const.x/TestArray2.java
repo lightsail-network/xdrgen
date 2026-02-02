@@ -40,6 +40,10 @@ public class TestArray2 implements XdrElement {
     if (TestArray2Size > 1) {
       throw new IOException("TestArray2 size " + TestArray2Size + " exceeds max size 1");
     }
+    int TestArray2RemainingInputLen = stream.getRemainingInputLen();
+    if (TestArray2RemainingInputLen >= 0 && TestArray2RemainingInputLen < TestArray2Size) {
+      throw new IOException("TestArray2 size " + TestArray2Size + " exceeds remaining input length " + TestArray2RemainingInputLen);
+    }
     decodedTestArray2.TestArray2 = new Integer[TestArray2Size];
     for (int i = 0; i < TestArray2Size; i++) {
       decodedTestArray2.TestArray2[i] = stream.readInt();
@@ -55,6 +59,7 @@ public class TestArray2 implements XdrElement {
   public static TestArray2 fromXdrByteArray(byte[] xdr) throws IOException {
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(xdr);
     XdrDataInputStream xdrDataInputStream = new XdrDataInputStream(byteArrayInputStream);
+    xdrDataInputStream.setMaxInputLen(xdr.length);
     return decode(xdrDataInputStream);
   }
 }

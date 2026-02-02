@@ -4,11 +4,20 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import lombok.Setter;
 
 public class XdrDataInputStream extends DataInputStream {
 
     // The underlying input stream
     private final XdrInputStream mIn;
+
+    /**
+     * Maximum input length, -1 if unknown.
+     * This is used to validate that the declared size of variable-length
+     * arrays/opaques doesn't exceed the remaining input length, preventing DoS attacks.
+     */
+    @Setter
+    private int maxInputLen = -1;
 
     /**
      * Creates a XdrDataInputStream that uses the specified
@@ -19,6 +28,19 @@ public class XdrDataInputStream extends DataInputStream {
     public XdrDataInputStream(InputStream in) {
         super(new XdrInputStream(in));
         mIn = (XdrInputStream) super.in;
+    }
+
+    /**
+     * Returns the remaining input length if known, -1 otherwise.
+     * This can be used to validate sizes before allocating memory.
+     *
+     * @return remaining input length, or -1 if unknown
+     */
+    public int getRemainingInputLen() {
+        if (maxInputLen < 0) {
+            return -1;
+        }
+        return maxInputLen - mIn.getCount();
     }
 
     public int[] readIntArray() throws IOException {
@@ -80,6 +102,10 @@ public class XdrDataInputStream extends DataInputStream {
         public XdrInputStream(InputStream in) {
             mIn = in;
             mCount = 0;
+        }
+
+        public int getCount() {
+            return mCount;
         }
 
         @Override

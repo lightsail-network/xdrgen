@@ -41,6 +41,10 @@ public class LotsOfMyStructs implements XdrElement {
     if (membersSize < 0) {
       throw new IOException("members size " + membersSize + " is negative");
     }
+    int membersRemainingInputLen = stream.getRemainingInputLen();
+    if (membersRemainingInputLen >= 0 && membersRemainingInputLen < membersSize) {
+      throw new IOException("members size " + membersSize + " exceeds remaining input length " + membersRemainingInputLen);
+    }
     decodedLotsOfMyStructs.members = new MyStruct[membersSize];
     for (int i = 0; i < membersSize; i++) {
       decodedLotsOfMyStructs.members[i] = MyStruct.decode(stream);
@@ -55,6 +59,7 @@ public class LotsOfMyStructs implements XdrElement {
   public static LotsOfMyStructs fromXdrByteArray(byte[] xdr) throws IOException {
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(xdr);
     XdrDataInputStream xdrDataInputStream = new XdrDataInputStream(byteArrayInputStream);
+    xdrDataInputStream.setMaxInputLen(xdr.length);
     return decode(xdrDataInputStream);
   }
 }

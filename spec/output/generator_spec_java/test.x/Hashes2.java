@@ -40,6 +40,10 @@ public class Hashes2 implements XdrElement {
     if (Hashes2Size > 12) {
       throw new IOException("Hashes2 size " + Hashes2Size + " exceeds max size 12");
     }
+    int Hashes2RemainingInputLen = stream.getRemainingInputLen();
+    if (Hashes2RemainingInputLen >= 0 && Hashes2RemainingInputLen < Hashes2Size) {
+      throw new IOException("Hashes2 size " + Hashes2Size + " exceeds remaining input length " + Hashes2RemainingInputLen);
+    }
     decodedHashes2.Hashes2 = new Hash[Hashes2Size];
     for (int i = 0; i < Hashes2Size; i++) {
       decodedHashes2.Hashes2[i] = Hash.decode(stream);
@@ -55,6 +59,7 @@ public class Hashes2 implements XdrElement {
   public static Hashes2 fromXdrByteArray(byte[] xdr) throws IOException {
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(xdr);
     XdrDataInputStream xdrDataInputStream = new XdrDataInputStream(byteArrayInputStream);
+    xdrDataInputStream.setMaxInputLen(xdr.length);
     return decode(xdrDataInputStream);
   }
 }

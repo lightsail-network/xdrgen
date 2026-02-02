@@ -408,6 +408,7 @@ module Xdrgen
           public static #{return_type} fromXdrByteArray(byte[] xdr) throws IOException {
             ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(xdr);
             XdrDataInputStream xdrDataInputStream = new XdrDataInputStream(byteArrayInputStream);
+            xdrDataInputStream.setMaxInputLen(xdr.length);
             return decode(xdrDataInputStream);
           }
         EOS
@@ -508,6 +509,11 @@ module Xdrgen
               out.puts "  throw new IOException(\"#{member.name} size \" + #{member.name}Size + \" exceeds max size #{max_size}\");"
               out.puts "}"
             end
+            # Add input length check to prevent DoS
+            out.puts "int #{member.name}RemainingInputLen = stream.getRemainingInputLen();"
+            out.puts "if (#{member.name}RemainingInputLen >= 0 && #{member.name}RemainingInputLen < #{member.name}Size) {"
+            out.puts "  throw new IOException(\"#{member.name} size \" + #{member.name}Size + \" exceeds remaining input length \" + #{member.name}RemainingInputLen);"
+            out.puts "}"
           end
           out.puts <<-EOS.strip_heredoc
             #{value}.#{member.name} = new byte[#{member.name}Size];
@@ -528,6 +534,11 @@ module Xdrgen
               out.puts "  throw new IOException(\"#{member.name} size \" + #{member.name}Size + \" exceeds max size #{max_size}\");"
               out.puts "}"
             end
+            # Add input length check to prevent DoS
+            out.puts "int #{member.name}RemainingInputLen = stream.getRemainingInputLen();"
+            out.puts "if (#{member.name}RemainingInputLen >= 0 && #{member.name}RemainingInputLen < #{member.name}Size) {"
+            out.puts "  throw new IOException(\"#{member.name} size \" + #{member.name}Size + \" exceeds remaining input length \" + #{member.name}RemainingInputLen);"
+            out.puts "}"
           end
           out.puts <<-EOS.strip_heredoc
             #{value}.#{member.name} = new #{type_string member.type}[#{member.name}Size];

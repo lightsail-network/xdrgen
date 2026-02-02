@@ -35,6 +35,10 @@ public class Uint514 implements XdrElement {
     if (uint514Size < 0) {
       throw new IOException("uint514 size " + uint514Size + " is negative");
     }
+    int uint514RemainingInputLen = stream.getRemainingInputLen();
+    if (uint514RemainingInputLen >= 0 && uint514RemainingInputLen < uint514Size) {
+      throw new IOException("uint514 size " + uint514Size + " exceeds remaining input length " + uint514RemainingInputLen);
+    }
     decodedUint514.uint514 = new byte[uint514Size];
     stream.read(decodedUint514.uint514, 0, uint514Size);
     return decodedUint514;
@@ -48,6 +52,7 @@ public class Uint514 implements XdrElement {
   public static Uint514 fromXdrByteArray(byte[] xdr) throws IOException {
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(xdr);
     XdrDataInputStream xdrDataInputStream = new XdrDataInputStream(byteArrayInputStream);
+    xdrDataInputStream.setMaxInputLen(xdr.length);
     return decode(xdrDataInputStream);
   }
 }

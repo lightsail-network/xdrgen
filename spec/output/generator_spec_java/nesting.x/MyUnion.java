@@ -80,6 +80,7 @@ public class MyUnion implements XdrElement {
   public static MyUnion fromXdrByteArray(byte[] xdr) throws IOException {
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(xdr);
     XdrDataInputStream xdrDataInputStream = new XdrDataInputStream(byteArrayInputStream);
+    xdrDataInputStream.setMaxInputLen(xdr.length);
     return decode(xdrDataInputStream);
   }
 
@@ -113,6 +114,7 @@ public class MyUnion implements XdrElement {
     public static MyUnionOne fromXdrByteArray(byte[] xdr) throws IOException {
       ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(xdr);
       XdrDataInputStream xdrDataInputStream = new XdrDataInputStream(byteArrayInputStream);
+      xdrDataInputStream.setMaxInputLen(xdr.length);
       return decode(xdrDataInputStream);
     }
 
@@ -151,6 +153,7 @@ public class MyUnion implements XdrElement {
     public static MyUnionTwo fromXdrByteArray(byte[] xdr) throws IOException {
       ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(xdr);
       XdrDataInputStream xdrDataInputStream = new XdrDataInputStream(byteArrayInputStream);
+      xdrDataInputStream.setMaxInputLen(xdr.length);
       return decode(xdrDataInputStream);
     }
 

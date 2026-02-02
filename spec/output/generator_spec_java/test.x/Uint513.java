@@ -38,6 +38,10 @@ public class Uint513 implements XdrElement {
     if (uint513Size > 64) {
       throw new IOException("uint513 size " + uint513Size + " exceeds max size 64");
     }
+    int uint513RemainingInputLen = stream.getRemainingInputLen();
+    if (uint513RemainingInputLen >= 0 && uint513RemainingInputLen < uint513Size) {
+      throw new IOException("uint513 size " + uint513Size + " exceeds remaining input length " + uint513RemainingInputLen);
+    }
     decodedUint513.uint513 = new byte[uint513Size];
     stream.read(decodedUint513.uint513, 0, uint513Size);
     return decodedUint513;
@@ -51,6 +55,7 @@ public class Uint513 implements XdrElement {
   public static Uint513 fromXdrByteArray(byte[] xdr) throws IOException {
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(xdr);
     XdrDataInputStream xdrDataInputStream = new XdrDataInputStream(byteArrayInputStream);
+    xdrDataInputStream.setMaxInputLen(xdr.length);
     return decode(xdrDataInputStream);
   }
 }

@@ -66,6 +66,7 @@ public class Nester implements XdrElement {
   public static Nester fromXdrByteArray(byte[] xdr) throws IOException {
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(xdr);
     XdrDataInputStream xdrDataInputStream = new XdrDataInputStream(byteArrayInputStream);
+    xdrDataInputStream.setMaxInputLen(xdr.length);
     return decode(xdrDataInputStream);
   }
 
@@ -113,6 +114,7 @@ public class Nester implements XdrElement {
     public static NestedEnum fromXdrByteArray(byte[] xdr) throws IOException {
       ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(xdr);
       XdrDataInputStream xdrDataInputStream = new XdrDataInputStream(byteArrayInputStream);
+      xdrDataInputStream.setMaxInputLen(xdr.length);
       return decode(xdrDataInputStream);
     }
 
@@ -147,6 +149,7 @@ public class Nester implements XdrElement {
     public static NesterNestedStruct fromXdrByteArray(byte[] xdr) throws IOException {
       ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(xdr);
       XdrDataInputStream xdrDataInputStream = new XdrDataInputStream(byteArrayInputStream);
+      xdrDataInputStream.setMaxInputLen(xdr.length);
       return decode(xdrDataInputStream);
     }
 
@@ -201,6 +204,7 @@ public class Nester implements XdrElement {
     public static NesterNestedUnion fromXdrByteArray(byte[] xdr) throws IOException {
       ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(xdr);
       XdrDataInputStream xdrDataInputStream = new XdrDataInputStream(byteArrayInputStream);
+      xdrDataInputStream.setMaxInputLen(xdr.length);
       return decode(xdrDataInputStream);
     }
 
