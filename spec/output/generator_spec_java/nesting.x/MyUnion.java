@@ -73,6 +73,8 @@ public class MyUnion implements XdrElement {
   break;
   case OFFER:
   break;
+  default:
+    throw new IOException("Unknown discriminant value: " + discriminant);
   }
     return decodedMyUnion;
   }

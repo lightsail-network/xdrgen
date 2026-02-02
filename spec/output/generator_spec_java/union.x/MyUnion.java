@@ -77,6 +77,8 @@ public class MyUnion implements XdrElement {
     decodedMyUnion.things[i] = Multi.decode(stream, maxDepth);
   }
   break;
+  default:
+    throw new IOException("Unknown discriminant value: " + discriminant);
   }
     return decodedMyUnion;
   }

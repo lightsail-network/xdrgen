@@ -76,6 +76,8 @@ public class IntUnion implements XdrElement {
     decodedIntUnion.things[i] = Multi.decode(stream, maxDepth);
   }
   break;
+  default:
+    throw new IOException("Unknown discriminant value: " + discriminant);
   }
     return decodedIntUnion;
   }

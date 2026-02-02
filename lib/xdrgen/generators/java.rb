@@ -379,6 +379,7 @@ module Xdrgen
           out.puts "switch (decoded#{name union}.getDiscriminant()) {"
         end
 
+        has_default_arm = union.arms.any? { |arm| arm.is_a?(AST::Definitions::UnionDefaultArm) }
         union.arms.each do |arm|
           case arm
             when AST::Definitions::UnionDefaultArm ;
@@ -399,6 +400,10 @@ module Xdrgen
           end
           decode_member "decoded#{name union}", arm, out, "maxDepth"
           out.puts "break;"
+        end
+        unless has_default_arm
+          out.puts "default:"
+          out.puts "  throw new IOException(\"Unknown discriminant value: \" + discriminant);"
         end
         out.puts "}\n"
         out.indent do
