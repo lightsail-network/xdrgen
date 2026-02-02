@@ -57,7 +57,7 @@ public class MyStruct implements XdrElement {
     decodedMyStruct.field4 = XdrUnsignedInteger.decode(stream);
     decodedMyStruct.field5 = stream.readFloat();
     decodedMyStruct.field6 = stream.readDouble();
-    decodedMyStruct.field7 = stream.readInt() == 1 ? true : false;
+    decodedMyStruct.field7 = stream.readBoolean();
     return decodedMyStruct;
   }
   public static MyStruct fromXdrBase64(String xdr) throws IOException {

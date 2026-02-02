@@ -34,8 +34,8 @@ public class OptHash1 implements XdrElement {
 
   public static OptHash1 decode(XdrDataInputStream stream) throws IOException {
     OptHash1 decodedOptHash1 = new OptHash1();
-    int optHash1Present = stream.readInt();
-    if (optHash1Present != 0) {
+    boolean optHash1Present = stream.readBoolean();
+    if (optHash1Present) {
     decodedOptHash1.optHash1 = Hash.decode(stream);
     }
     return decodedOptHash1;

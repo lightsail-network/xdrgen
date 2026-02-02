@@ -489,8 +489,8 @@ module Xdrgen
         end
         if member.type.sub_type == :optional
           out.puts <<-EOS.strip_heredoc
-            int #{member.name}Present = stream.readInt();
-            if (#{member.name}Present != 0) {
+            boolean #{member.name}Present = stream.readBoolean();
+            if (#{member.name}Present) {
           EOS
         end
         case member.declaration
@@ -571,7 +571,7 @@ module Xdrgen
         when AST::Typespecs::Quadruple ;
           raise "cannot render quadruple in golang"
         when AST::Typespecs::Bool ;
-          "stream.readInt() == 1 ? true : false"
+          "stream.readBoolean()"
         when AST::Typespecs::String ;
           "XdrString.decode(stream, #{(convert_constant decl.size) || 'Integer.MAX_VALUE'})"
         when AST::Typespecs::Simple ;

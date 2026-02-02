@@ -54,16 +54,16 @@ public class HasOptions implements XdrElement {
   }
   public static HasOptions decode(XdrDataInputStream stream) throws IOException {
     HasOptions decodedHasOptions = new HasOptions();
-    int firstOptionPresent = stream.readInt();
-    if (firstOptionPresent != 0) {
+    boolean firstOptionPresent = stream.readBoolean();
+    if (firstOptionPresent) {
     decodedHasOptions.firstOption = stream.readInt();
     }
-    int secondOptionPresent = stream.readInt();
-    if (secondOptionPresent != 0) {
+    boolean secondOptionPresent = stream.readBoolean();
+    if (secondOptionPresent) {
     decodedHasOptions.secondOption = stream.readInt();
     }
-    int thirdOptionPresent = stream.readInt();
-    if (thirdOptionPresent != 0) {
+    boolean thirdOptionPresent = stream.readBoolean();
+    if (thirdOptionPresent) {
     decodedHasOptions.thirdOption = Arr.decode(stream);
     }
     return decodedHasOptions;

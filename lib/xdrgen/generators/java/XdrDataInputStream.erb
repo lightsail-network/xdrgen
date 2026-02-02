@@ -43,6 +43,24 @@ public class XdrDataInputStream extends DataInputStream {
         return maxInputLen - mIn.getCount();
     }
 
+    /**
+     * Reads a boolean value from the stream.
+     * Per RFC 4506, a boolean is encoded as an integer that must be 0 (FALSE) or 1 (TRUE).
+     *
+     * @return the boolean value
+     * @throws IOException if the value is not 0 or 1, or if an I/O error occurs
+     */
+    public boolean readBoolean() throws IOException {
+        int value = readInt();
+        if (value == 0) {
+            return false;
+        } else if (value == 1) {
+            return true;
+        } else {
+            throw new IOException("Invalid boolean value: " + value + ", must be 0 or 1 per RFC 4506");
+        }
+    }
+
     public int[] readIntArray() throws IOException {
         int l = readInt();
         return readIntArray(l);
