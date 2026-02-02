@@ -58,15 +58,15 @@ public class HasOptions implements XdrElement {
     }
     maxDepth -= 1;
     HasOptions decodedHasOptions = new HasOptions();
-    boolean firstOptionPresent = stream.readBoolean();
+    boolean firstOptionPresent = stream.readXdrBoolean();
     if (firstOptionPresent) {
     decodedHasOptions.firstOption = stream.readInt();
     }
-    boolean secondOptionPresent = stream.readBoolean();
+    boolean secondOptionPresent = stream.readXdrBoolean();
     if (secondOptionPresent) {
     decodedHasOptions.secondOption = stream.readInt();
     }
-    boolean thirdOptionPresent = stream.readBoolean();
+    boolean thirdOptionPresent = stream.readXdrBoolean();
     if (thirdOptionPresent) {
     decodedHasOptions.thirdOption = Arr.decode(stream, maxDepth);
     }

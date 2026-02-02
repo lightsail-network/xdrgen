@@ -530,7 +530,7 @@ module Xdrgen
         end
         if member.type.sub_type == :optional
           out.puts <<-EOS.strip_heredoc
-            boolean #{member.name}Present = stream.readBoolean();
+            boolean #{member.name}Present = stream.readXdrBoolean();
             if (#{member.name}Present) {
           EOS
         end
@@ -612,7 +612,7 @@ module Xdrgen
         when AST::Typespecs::Quadruple ;
           raise "cannot render quadruple in java"
         when AST::Typespecs::Bool ;
-          "stream.readBoolean()"
+          "stream.readXdrBoolean()"
         when AST::Typespecs::String ;
           depth_var ? "XdrString.decode(stream, #{depth_var}, #{(convert_constant decl.size) || 'Integer.MAX_VALUE'})" : "XdrString.decode(stream, #{(convert_constant decl.size) || 'Integer.MAX_VALUE'})"
         when AST::Typespecs::Simple ;

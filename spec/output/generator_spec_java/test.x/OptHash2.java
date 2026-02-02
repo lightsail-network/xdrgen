@@ -38,7 +38,7 @@ public class OptHash2 implements XdrElement {
     }
     maxDepth -= 1;
     OptHash2 decodedOptHash2 = new OptHash2();
-    boolean optHash2Present = stream.readBoolean();
+    boolean optHash2Present = stream.readXdrBoolean();
     if (optHash2Present) {
     decodedOptHash2.optHash2 = Hash.decode(stream, maxDepth);
     }

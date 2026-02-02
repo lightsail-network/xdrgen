@@ -47,13 +47,13 @@ public class XdrDataInputStream extends DataInputStream {
     }
 
     /**
-     * Reads a boolean value from the stream.
+     * Reads an XDR boolean value from the stream.
      * Per RFC 4506, a boolean is encoded as an integer that must be 0 (FALSE) or 1 (TRUE).
      *
      * @return the boolean value
      * @throws IOException if the value is not 0 or 1, or if an I/O error occurs
      */
-    public boolean readBoolean() throws IOException {
+    public boolean readXdrBoolean() throws IOException {
         int value = readInt();
         if (value == 0) {
             return false;

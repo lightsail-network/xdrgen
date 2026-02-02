@@ -61,7 +61,7 @@ public class MyStruct implements XdrElement {
     decodedMyStruct.field4 = XdrUnsignedInteger.decode(stream, maxDepth);
     decodedMyStruct.field5 = stream.readFloat();
     decodedMyStruct.field6 = stream.readDouble();
-    decodedMyStruct.field7 = stream.readBoolean();
+    decodedMyStruct.field7 = stream.readXdrBoolean();
     return decodedMyStruct;
   }
   public static MyStruct decode(XdrDataInputStream stream) throws IOException {
