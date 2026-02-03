@@ -65,6 +65,12 @@ public class XdrDataInputStream extends DataInputStream {
         }
     }
 
+    /**
+     * @deprecated This method does not validate the array length and may cause
+     * OutOfMemoryError or NegativeArraySizeException with untrusted input.
+     * Use generated XDR type decoders instead which include proper validation.
+     */
+    @Deprecated
     public int[] readIntArray() throws IOException {
         int l = readInt();
         return readIntArray(l);
@@ -78,6 +84,12 @@ public class XdrDataInputStream extends DataInputStream {
         return arr;
     }
 
+    /**
+     * @deprecated This method does not validate the array length and may cause
+     * OutOfMemoryError or NegativeArraySizeException with untrusted input.
+     * Use generated XDR type decoders instead which include proper validation.
+     */
+    @Deprecated
     public float[] readFloatArray() throws IOException {
         int l = readInt();
         return readFloatArray(l);
@@ -91,6 +103,12 @@ public class XdrDataInputStream extends DataInputStream {
         return arr;
     }
 
+    /**
+     * @deprecated This method does not validate the array length and may cause
+     * OutOfMemoryError or NegativeArraySizeException with untrusted input.
+     * Use generated XDR type decoders instead which include proper validation.
+     */
+    @Deprecated
     public double[] readDoubleArray() throws IOException {
         int l = readInt();
         return readDoubleArray(l);
